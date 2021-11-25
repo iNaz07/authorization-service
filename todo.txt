@@ -1,0 +1,14 @@
+  1. check new endpoints
+  
+  
+
+Done:
+6. set cookie with token when login
+1. check password from register and gecode it 
+3. validate iin when register
+4. validate username when register
+7. encode pasword when register
+2. validate password when login by encoded password
+5. add endpoints to get info about user
+2. parsetoken function with id
+  3. parsetoken func with role

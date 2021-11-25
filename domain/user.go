@@ -6,6 +6,7 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Role     string `json:"role"`
+	RegisterDate string `json:"registerdate"`
 }
 
 type UserRepository interface {
@@ -21,6 +22,7 @@ type UserUsecase interface {
 	CreateUserUsecase(user *User) error
 	GetUserByNameUsecase(name string) (*User, error) //пересмотреть
 	GetUserByIINUsecase(iin string) (*User, error)
+	GetUserByIDUsecase(id int64) (*User, error)
 	GetAllUsecase() ([]*User, error)
 	DeleteUserUsecase(iin string) error
 }

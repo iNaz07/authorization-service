@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 	"transaction-service/domain"
+	utils "transaction-service/utils"
 
 	"github.com/labstack/echo/v4"
 )
@@ -20,6 +22,8 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 	e.POST("/login", handler.Signin)
 	e.POST("/signup", handler.Registration)
 	e.GET("/signup", handler.RegistrationPage)
+	e.GET("/info/:id", handler.GetUserInfo)
+	e.GET("/info", handler.GetAllUserInfo)
 }
 
 func (u *UserHandler) Signin(e echo.Context) error {
@@ -27,10 +31,14 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	login, password := u.ExtractCreds(e)
 	fmt.Println("from signin", login, password)
 	user, err := u.UserUsecase.GetUserByNameUsecase(login)
-	if err != nil || user.Password != password {
+	if err != nil {
 		fmt.Println("from signin checking user from db", err)
-		return e.String(http.StatusForbidden, "invalid credentials")
+		return e.String(http.StatusForbidden, fmt.Sprintf("username is incorrect: %v", err))
 	}
+	if !utils.ComparePasswordHash(user.Password, password) {
+		return e.String(http.StatusForbidden, "password is incorrect: %v")
+	}
+
 	signedToken, err := u.JwtUsecase.GenerateToken(user.ID, user.Role)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("coundn't create token. Error: %v", err))
@@ -39,6 +47,12 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	if err := u.JwtUsecase.InsertToken(user.ID, signedToken); err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("coundn't insert token in redis. Error: %v", err))
 	}
+	ttl := u.JwtUsecase.GetAccessTTL()
+	cookie := new(http.Cookie)
+	cookie.Name = "access_token"
+	cookie.Value = "signedToken"
+	cookie.Expires = time.Now().Add(ttl)
+	e.SetCookie(cookie)
 	return e.String(http.StatusOK, fmt.Sprintf("Token: %s", signedToken))
 }
 
@@ -109,4 +123,41 @@ func (u *UserHandler) RegistrationPage(e echo.Context) error {
 </body>
 </html>
 	`)
+}
+
+func (u *UserHandler) GetUserInfo(e echo.Context) error {
+	cookie, err := e.Cookie("access_token")
+	if err != nil {
+		return e.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
+	}
+	id, err := u.JwtUsecase.ParseTokenAndGetID(cookie.Value)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
+	}
+	user, err := u.UserUsecase.GetUserByIDUsecase(id)
+	if err != nil {
+		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
+	}
+
+	return e.JSON(http.StatusOK, user)
+}
+
+func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
+	cookie, err := e.Cookie("access_token")
+	if err != nil {
+		return e.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
+	}
+	role, err := u.JwtUsecase.ParseTokenAndGetRole(cookie.Value)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
+	}
+	if role != "admin" {
+		return e.String(http.StatusForbidden, fmt.Sprintf("access denied: %v", err))
+	}
+	user, err := u.UserUsecase.GetAllUsecase()
+	if err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err))
+	}
+
+	return e.JSON(http.StatusOK, user)
 }

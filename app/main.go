@@ -97,7 +97,8 @@ func connectDB() *pgxpool.Pool {
 		username VARCHAR (100) NOT NULL UNIQUE,
 		password VARCHAR (100) NOT NULL,
 		iin VARCHAR (255) NOT NULL,
-		role VARCHAR (24) NOT NULL
+		role VARCHAR (24) NOT NULL,
+		registerDate VARCHAR (255) NOT NULL
 	);
 	`)
 	if err != nil {

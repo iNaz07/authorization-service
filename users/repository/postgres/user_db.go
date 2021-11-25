@@ -20,8 +20,8 @@ func NewUserRepository(Conn *pgxpool.Pool) domain.UserRepository {
 func (u *userRepository) CreateUser(user *domain.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
-	if _, err := u.Conn.Exec(ctx, "INSERT INTO users(iin, username, password, role) VALUES ($1, $2, $3, $4)",
-		user.IIN, user.Username, user.Password, user.Role); err != nil {
+	if _, err := u.Conn.Exec(ctx, "INSERT INTO users(iin, username, password, role, registerdate) VALUES ($1, $2, $3, $4, $5)",
+		user.IIN, user.Username, user.Password, user.Role, user.RegisterDate); err != nil {
 		return fmt.Errorf("dbInsertUser: %w", err)
 	}
 	return nil
@@ -44,8 +44,8 @@ func (u *userRepository) GetUserByID(id int64) (*domain.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, password FROM users WHERE id=$1", id).
-		Scan(&user.ID, &user.IIN, &user.Username, &user.Password); err != nil {
+	if err := u.Conn.QueryRow(ctx, "SELECT iin, username, registerdate FROM users WHERE id=$1", id).
+		Scan(&user.IIN, &user.Username, &user.RegisterDate); err != nil {
 		return nil, err
 	}
 
@@ -74,8 +74,8 @@ func (u *userRepository) GetUserByUsername(username string) (*domain.User, error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, password FROM users WHERE username=$1", username).
-		Scan(&user.ID, &user.IIN, &user.Username, &user.Password); err != nil {
+	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, password, role, registerfate FROM users WHERE username=$1", username).
+		Scan(&user.ID, &user.IIN, &user.Username, &user.Password, &user.Role, &user.RegisterDate); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -89,13 +89,13 @@ func (u *userRepository) GetAllUsers() ([]*domain.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	rows, err := u.Conn.Query(ctx, "SELECT id, iin, username, password FROM users")
+	rows, err := u.Conn.Query(ctx, "SELECT id, iin, username, registerdate FROM users")
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		if err := rows.Scan(&user.ID, &user.IIN, &user.Username, &user.Password); err != nil {
+		if err := rows.Scan(&user.ID, &user.IIN, &user.Username, &user.RegisterDate); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
