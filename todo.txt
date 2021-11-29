@@ -1,5 +1,6 @@
   1. check new endpoints
-  
+  2. add middleware 
+  4
   
 
 Done:
