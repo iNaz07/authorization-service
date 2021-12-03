@@ -74,7 +74,7 @@ func (u *userRepository) GetUserByUsername(username string) (*domain.User, error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, password, role, registerfate FROM users WHERE username=$1", username).
+	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, password, role, registerDate FROM users WHERE username=$1", username).
 		Scan(&user.ID, &user.IIN, &user.Username, &user.Password, &user.Role, &user.RegisterDate); err != nil {
 		return nil, err
 	}

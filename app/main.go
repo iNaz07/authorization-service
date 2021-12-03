@@ -85,12 +85,12 @@ func connectDB() *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("Ping db error: %v", err)
 	}
-	// _, err = db.Exec(ctx, `
-	// DROP TABLE users;
-	// `)
-	// if err != nil {
-	// 	log.Fatalf("Drop table error: %v", err)
-	// }
+	_, err = db.Exec(ctx, `
+	DROP TABLE users;
+	`)
+	if err != nil {
+		log.Fatalf("Drop table error: %v", err)
+	}
 	_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
@@ -106,7 +106,7 @@ func connectDB() *pgxpool.Pool {
 	}
 	_, err = db.Exec(ctx,
 		`INSERT INTO users(username, password, iin, role, registerDate) VALUES ($1, $2, $3, $4, $5)`,
-		"admin", "pass", "940217200216", "admin", time.Now().Format("2021/12/03 18:05:00"))
+		"admin", "pass", "940217200216", "admin", time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Fatalf("Add admin error: %v", err)
 	}

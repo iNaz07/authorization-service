@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 	"transaction-service/domain"
@@ -52,7 +53,7 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	ttl := u.JwtUsecase.GetAccessTTL()
 	cookie := new(http.Cookie)
 	cookie.Name = "access_token"
-	cookie.Value = "signedToken"
+	cookie.Value = signedToken
 	cookie.Expires = time.Now().Add(ttl)
 	e.SetCookie(cookie)
 	return e.String(http.StatusOK, fmt.Sprintf("Token: %s", signedToken))
@@ -149,12 +150,17 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		Balance       int64  `json:"balance"`
 		RegisterDate  string `json:"registerDate"`
 	}{}
-	res, err := http.Get(`localhost:8080/account/info/${user.IIN}`)
+	res, err := http.Get("http://localhost:8181/account/info/" + user.IIN) //it doesn't work
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
 	}
 
-	if err := json.Unmarshal([]byte(res.Body.Close().Error()), &account); err != nil {
+	resp, err := io.ReadAll(res.Body)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("read body error: %v", err))
+	}
+	res.Body.Close()
+	if err := json.Unmarshal(resp, &account); err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
 	}
 	account.User = *user
