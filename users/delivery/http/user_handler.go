@@ -24,6 +24,8 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 	e.GET("/signup", handler.RegistrationPage)
 	e.GET("/info/:id", handler.GetUserInfo)
 	e.GET("/info", handler.GetAllUserInfo)
+	// e.Use(middleware.JWTWithConfig(config))
+
 }
 
 func (u *UserHandler) Signin(e echo.Context) error {
@@ -139,7 +141,25 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
 	}
 
-	return e.JSON(http.StatusOK, user)
+	account := struct {
+		// ID            int64  `json:"id"`
+		// IIN           string `json:"iin"`
+		User          domain.User
+		AccountNumber string `json:"number"`
+		Balance       int64  `json:"balance"`
+		RegisterDate  string `json:"registerDate"`
+	}{}
+	res, err := http.Get(`localhost:8080/account/info/${user.IIN}`)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
+	}
+
+	if err := json.Unmarshal([]byte(res.Body.Close().Error()), &account); err != nil {
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
+	}
+	account.User = *user
+
+	return e.JSON(http.StatusOK, account)
 }
 
 func (u *UserHandler) GetAllUserInfo(e echo.Context) error {

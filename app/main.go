@@ -15,7 +15,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo/v4"
 )
-
+//TODO: move to env
 const (
 	username = "postgres"
 	password = "password"
@@ -28,7 +28,6 @@ func main() {
 
 	client := connectRedis()
 	db := connectDB()
-
 	defer db.Close()
 
 	token := domain.JwtToken{
@@ -47,7 +46,7 @@ func main() {
 
 	err := e.Start("127.0.0.1:8080")
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(`shutting down the server`, err)
+		log.Fatal(`shutting down the server`, err) //better do not fatal, cuz defer wouldn't done. think bout it
 	}
 }
 
