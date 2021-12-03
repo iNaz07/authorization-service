@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo/v4"
 )
+
 //TODO: move to env
 const (
 	username = "postgres"
@@ -84,12 +85,12 @@ func connectDB() *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("Ping db error: %v", err)
 	}
-	_, err = db.Exec(ctx, `
-	DROP TABLE users;
-	`)
-	if err != nil {
-		log.Fatalf("Drop table error: %v", err)
-	}
+	// _, err = db.Exec(ctx, `
+	// DROP TABLE users;
+	// `)
+	// if err != nil {
+	// 	log.Fatalf("Drop table error: %v", err)
+	// }
 	_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
@@ -104,8 +105,8 @@ func connectDB() *pgxpool.Pool {
 		log.Fatalf("Create table error: %v", err)
 	}
 	_, err = db.Exec(ctx,
-		`INSERT INTO users(username, password, iin, role) VALUES ($1, $2, $3, $4)`,
-		"admin", "pass", "940217200216", "admin")
+		`INSERT INTO users(username, password, iin, role, registerDate) VALUES ($1, $2, $3, $4, $5)`,
+		"admin", "pass", "940217200216", "admin", time.Now().Format("2021/12/03 18:05:00"))
 	if err != nil {
 		log.Fatalf("Add admin error: %v", err)
 	}
