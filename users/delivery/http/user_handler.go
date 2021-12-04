@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 	"transaction-service/domain"
 	utils "transaction-service/utils"
@@ -26,7 +27,6 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 	e.GET("/info/:id", handler.GetUserInfo)
 	e.GET("/info", handler.GetAllUserInfo)
 	// e.Use(middleware.JWTWithConfig(config))
-
 }
 
 func (u *UserHandler) Signin(e echo.Context) error {
@@ -129,37 +129,54 @@ func (u *UserHandler) RegistrationPage(e echo.Context) error {
 }
 
 func (u *UserHandler) GetUserInfo(e echo.Context) error {
+	newID, err := strconv.Atoi(e.Param("id"))
+	if err != nil {
+		return e.String(http.StatusBadRequest, "Invalid ID")
+	}
+
 	cookie, err := e.Cookie("access_token")
 	if err != nil {
 		return e.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
 	}
-	id, err := u.JwtUsecase.ParseTokenAndGetID(cookie.Value)
+	role, err := u.JwtUsecase.ParseTokenAndGetRole(cookie.Value)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
 	}
-	user, err := u.UserUsecase.GetUserByIDUsecase(id)
+	if role != "admin" {
+		id, err := u.JwtUsecase.ParseTokenAndGetID(cookie.Value)
+		// log.Println("id and cookie from auth service", id, cookie)
+		if err != nil {
+			return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
+		}
+		if id != int64(newID) {
+			return e.String(http.StatusForbidden, "access denied")
+		}
+	}
+
+	user, err := u.UserUsecase.GetUserByIDUsecase(int64(newID))
 	if err != nil {
 		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
 	}
 
 	account := struct {
-		// ID            int64  `json:"id"`
-		// IIN           string `json:"iin"`
-		User          domain.User
-		AccountNumber string `json:"number"`
-		Balance       int64  `json:"balance"`
-		RegisterDate  string `json:"registerDate"`
+		User         domain.User
+		Number       string `json:"number"`
+		Balance      int64  `json:"balance"`
+		RegisterDate string `json:"registerDate"`
 	}{}
-	res, err := http.Get("http://localhost:8181/account/info/" + user.IIN) //it doesn't work
+	res, err := http.Get("http://localhost:8181/account/info/" + user.IIN)
+	// log.Println("resp from get req from ts:  ", res, "ERROR is: ", err)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
 	}
-
 	resp, err := io.ReadAll(res.Body)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("read body error: %v", err))
 	}
 	res.Body.Close()
+	if res.StatusCode != 200 {
+		return e.String(res.StatusCode, fmt.Sprintf("get accounts info error: %v", string(resp)))
+	}
 	if err := json.Unmarshal(resp, &account); err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
 	}
