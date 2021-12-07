@@ -8,9 +8,12 @@ import (
 	"strconv"
 	"time"
 	"transaction-service/domain"
+	config "transaction-service/users/delivery/http/middleware"
+
 	utils "transaction-service/utils"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type UserHandler struct {
@@ -20,22 +23,28 @@ type UserHandler struct {
 
 func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsecase) {
 	handler := &UserHandler{UserUsecase: us, JwtUsecase: jwt}
-	e.GET("/login", handler.LoginPage)
+	midd := config.InitAuthorization(jwt)
+	e.GET("/login", handler.LoginPage).Name = "userSignInForm"
 	e.POST("/login", handler.Signin)
 	e.POST("/signup", handler.Registration)
+	e.POST("/signup/admin", handler.AdminRegistration, middleware.JWTWithConfig(midd.GetConfig()))
+
 	e.GET("/signup", handler.RegistrationPage)
-	e.GET("/info/:id", handler.GetUserInfo)
-	e.GET("/info", handler.GetAllUserInfo)
-	// e.Use(middleware.JWTWithConfig(config))
+
+	infoGroup := e.Group("/info")
+	infoGroup.Use(middleware.JWTWithConfig(midd.GetConfig()))
+
+	infoGroup.GET("", handler.GetAllUserInfo)
+	infoGroup.GET("/:id", handler.GetUserInfo)
+
 }
 
 func (u *UserHandler) Signin(e echo.Context) error {
-	//TODO: get from body
 	login, password := u.ExtractCreds(e)
-	fmt.Println("from signin", login, password)
+	// fmt.Println("from signin", login, password)
 	user, err := u.UserUsecase.GetUserByNameUsecase(login)
 	if err != nil {
-		fmt.Println("from signin checking user from db", err)
+		// fmt.Println("from signin checking user from db", err)
 		return e.String(http.StatusForbidden, fmt.Sprintf("username is incorrect: %v", err))
 	}
 	if !utils.ComparePasswordHash(user.Password, password) {
@@ -48,15 +57,22 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	}
 
 	if err := u.JwtUsecase.InsertToken(user.ID, signedToken); err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("coundn't insert token in redis. Error: %v", err))
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("coundn't insert token to redis. Error: %v", err))
 	}
-	ttl := u.JwtUsecase.GetAccessTTL()
-	cookie := new(http.Cookie)
-	cookie.Name = "access_token"
-	cookie.Value = signedToken
-	cookie.Expires = time.Now().Add(ttl)
-	e.SetCookie(cookie)
+
+	u.SetCookie(e, signedToken)
+
 	return e.String(http.StatusOK, fmt.Sprintf("Token: %s", signedToken))
+}
+
+func (u *UserHandler) SetCookie(e echo.Context, signedToken string) {
+	ttl := u.JwtUsecase.GetAccessTTL()
+	cookie := &http.Cookie{
+		Name:    "access-token",
+		Value:   signedToken,
+		Expires: time.Now().Add(ttl),
+	}
+	e.SetCookie(cookie)
 }
 
 func (u *UserHandler) ExtractCreds(ctx echo.Context) (login string, pass string) {
@@ -65,9 +81,31 @@ func (u *UserHandler) ExtractCreds(ctx echo.Context) (login string, pass string)
 
 func (u *UserHandler) Registration(e echo.Context) error {
 	userInfo, err := u.ExtractBody(e)
-	fmt.Println("from registration", userInfo, err)
+	// fmt.Println("from registration", userInfo, err)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, err.Error())
+	}
+	if err := u.UserUsecase.CreateUserUsecase(userInfo); err != nil {
+		return e.String(http.StatusBadRequest, err.Error())
+	}
+	return nil
+}
+
+func (u *UserHandler) AdminRegistration(e echo.Context) error {
+	userInfo, err := u.ExtractBody(e)
+	// fmt.Println("from registration", userInfo, err)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, err.Error())
+	}
+	meta, ok := e.Get("user").(map[int64]string)
+	if !ok {
+		return e.String(http.StatusInternalServerError, "cannot get meta info")
+	}
+
+	for _, role := range meta {
+		if role != "admin" {
+			return e.String(http.StatusForbidden, "access denied")
+		}
 	}
 	if err := u.UserUsecase.CreateUserUsecase(userInfo); err != nil {
 		return e.String(http.StatusBadRequest, err.Error())
@@ -134,21 +172,13 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		return e.String(http.StatusBadRequest, "Invalid ID")
 	}
 
-	cookie, err := e.Cookie("access_token")
-	if err != nil {
-		return e.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
+	meta, ok := e.Get("user").(map[int64]string)
+	if !ok {
+		return e.String(http.StatusInternalServerError, "cannot get meta info")
 	}
-	role, err := u.JwtUsecase.ParseTokenAndGetRole(cookie.Value)
-	if err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
-	}
-	if role != "admin" {
-		id, err := u.JwtUsecase.ParseTokenAndGetID(cookie.Value)
-		// log.Println("id and cookie from auth service", id, cookie)
-		if err != nil {
-			return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
-		}
-		if id != int64(newID) {
+
+	for id, role := range meta {
+		if role != "admin" && id != int64(newID) {
 			return e.String(http.StatusForbidden, "access denied")
 		}
 	}
@@ -158,49 +188,83 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
 	}
 
-	account := struct {
-		User         domain.User
-		Number       string `json:"number"`
-		Balance      int64  `json:"balance"`
-		RegisterDate string `json:"registerDate"`
-	}{}
-	res, err := http.Get("http://localhost:8181/account/info/" + user.IIN)
-	// log.Println("resp from get req from ts:  ", res, "ERROR is: ", err)
+	account, err := GetAccountInfo(e, *user, "http://localhost:8181/account/info/"+user.IIN)
 	if err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
+		return e.String(http.StatusInternalServerError, fmt.Sprintf("get acc info err: %v", err))
 	}
-	resp, err := io.ReadAll(res.Body)
-	if err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("read body error: %v", err))
+	if len(account) == 0 {
+		return e.JSON(http.StatusOK, struct {
+			User     domain.User
+			Accounts string
+		}{User: *user, Accounts: "empty"})
 	}
-	res.Body.Close()
-	if res.StatusCode != 200 {
-		return e.String(res.StatusCode, fmt.Sprintf("get accounts info error: %v", string(resp)))
+	for _, acc := range account {
+		acc.User = *user
 	}
-	if err := json.Unmarshal(resp, &account); err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
-	}
-	account.User = *user
-
 	return e.JSON(http.StatusOK, account)
 }
 
 func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
-	cookie, err := e.Cookie("access_token")
-	if err != nil {
-		return e.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
+	meta, ok := e.Get("user").(map[int64]string)
+	if !ok {
+		return e.String(http.StatusInternalServerError, "cannot get meta info")
 	}
-	role, err := u.JwtUsecase.ParseTokenAndGetRole(cookie.Value)
-	if err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
+
+	for _, role := range meta {
+		if role != "admin" {
+			return e.String(http.StatusForbidden, "access denied")
+		}
 	}
-	if role != "admin" {
-		return e.String(http.StatusForbidden, fmt.Sprintf("access denied: %v", err))
-	}
-	user, err := u.UserUsecase.GetAllUsecase()
+
+	users, err := u.UserUsecase.GetAllUsecase()
+	fmt.Println("all users: ", &users, err)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err))
 	}
+	account := domain.Accounts{}
 
-	return e.JSON(http.StatusOK, user)
+	all := []domain.Accounts{}
+
+	for _, user := range users {
+		fmt.Println("first user", user, user.IIN)
+		acc, err := GetAccountInfo(e, user, "http://localhost:8181/account/info/"+user.IIN)
+		if err != nil {
+			return e.String(http.StatusInternalServerError, fmt.Sprintf("get account info error: %v", err))
+		}
+		if len(acc) == 0 {
+			account.User = user
+			all = append(all, account)
+			continue
+		}
+		for _, a := range acc {
+			a.User = user
+			all = append(all, a)
+		}
+	}
+	return e.JSON(http.StatusOK, all)
+}
+
+func GetAccountInfo(e echo.Context, user domain.User, url string) ([]domain.Accounts, error) {
+	account := []domain.Accounts{}
+	res, err := http.Get(url)
+	fmt.Println("resp from get req from ts:  ", res, "ERROR is: ", err)
+	if err != nil {
+		return nil, err
+		// return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
+	}
+	resp, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+		// return e.String(http.StatusInternalServerError, fmt.Sprintf("read body error: %v", err))
+	}
+	res.Body.Close()
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("get account error: StatusCode not 200")
+		// return e.String(res.StatusCode, fmt.Sprintf("get accounts info error: %v", string(resp)))
+	}
+	if err := json.Unmarshal(resp, &account); err != nil {
+		return nil, err
+		// return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
+	}
+	return account, nil
 }

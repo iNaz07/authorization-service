@@ -27,15 +27,16 @@ func (u *userRepository) CreateUser(user *domain.User) error {
 	return nil
 }
 
-func (u *userRepository) AddRoleToUser(id int, role string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
-	defer cancel()
-	if _, err := u.Conn.Exec(ctx, "UPDATE users SET role=$1 WHERE id=$2",
-		role, id); err != nil {
-		return fmt.Errorf("dbInsertUser: %w", err)
-	}
-	return nil
-}
+// No need yet
+// func (u *userRepository) AddRoleToUser(id int, role string) error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+// 	defer cancel()
+// 	if _, err := u.Conn.Exec(ctx, "UPDATE users SET role=$1 WHERE id=$2",
+// 		role, id); err != nil {
+// 		return fmt.Errorf("dbInsertUser: %w", err)
+// 	}
+// 	return nil
+// }
 
 func (u *userRepository) GetUserByID(id int64) (*domain.User, error) {
 
@@ -81,10 +82,10 @@ func (u *userRepository) GetUserByUsername(username string) (*domain.User, error
 	return user, nil
 }
 
-func (u *userRepository) GetAllUsers() ([]*domain.User, error) {
+func (u *userRepository) GetAllUsers() ([]domain.User, error) {
 
-	user := &domain.User{}
-	users := []*domain.User{}
+	user := domain.User{}
+	users := []domain.User{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
@@ -93,6 +94,7 @@ func (u *userRepository) GetAllUsers() ([]*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		if err := rows.Scan(&user.ID, &user.IIN, &user.Username, &user.RegisterDate); err != nil {

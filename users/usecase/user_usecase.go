@@ -15,16 +15,20 @@ func NewUserUseCase(repo domain.UserRepository) domain.UserUsecase {
 	return &userUsecase{repo}
 }
 
-//TODO: нужно зашифровать пароль
 //TODO: validate name, password, iin
 func (u *userUsecase) CreateUserUsecase(user *domain.User) error {
 	if _, err := u.userRepo.GetUserByIIN(user.IIN); err == nil {
 		return fmt.Errorf("user already registered by iin: %w", err)
 	}
-
+	if err := utils.ValidateCreds(user.Username, user.Password, user.IIN); err != nil {
+		return fmt.Errorf("invalid creds: %w", err)
+	}
 	hashedPassword := utils.GenerateHash(user.Password)
 	user.Password = hashedPassword
 
+	if user.Role == "" {
+		user.Role = "user"
+	}
 	user.RegisterDate = time.Now().Format("2006-01-02 15:04:05")
 
 	if err := u.userRepo.CreateUser(user); err != nil {
@@ -57,7 +61,7 @@ func (u *userUsecase) GetUserByIINUsecase(iin string) (*domain.User, error) {
 	return user, nil
 }
 
-func (u *userUsecase) GetAllUsecase() ([]*domain.User, error) {
+func (u *userUsecase) GetAllUsecase() ([]domain.User, error) {
 	users, err := u.userRepo.GetAllUsers()
 	if err != nil {
 		return nil, fmt.Errorf("get all user error: %w", err)

@@ -2,8 +2,11 @@ package usecase
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 	"transaction-service/domain"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -39,6 +42,7 @@ func (j *jwtUsecase) ParseTokenAndGetID(token string) (int64, error) {
 	}
 	return int64(id), nil
 }
+
 func (j *jwtUsecase) ParseTokenAndGetRole(token string) (string, error) {
 	claims, err := j.ParseToken(token)
 	if err != nil {
@@ -53,7 +57,7 @@ func (j *jwtUsecase) ParseTokenAndGetRole(token string) (string, error) {
 
 func (j *jwtUsecase) InsertToken(id int64, token string) error {
 	key := fmt.Sprintf("user:%d", id)
-	return j.token.RedisConn.Set(key, token, 10*time.Minute).Err()
+	return j.token.RedisConn.Set(key, token, 30*time.Minute).Err()
 }
 
 func (j *jwtUsecase) FindToken(id int64, token string) bool {
@@ -94,4 +98,9 @@ func (j *jwtUsecase) ParseToken(token string) (jwt.MapClaims, error) {
 		}
 	}
 	return claims, nil
+}
+
+func (j *jwtUsecase) JWTErrorChecker(err error, c echo.Context) error {
+	// Redirects to the signIn form.
+	return c.Redirect(http.StatusMovedPermanently, c.Echo().Reverse("userSignInForm"))
 }

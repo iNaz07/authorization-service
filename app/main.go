@@ -34,7 +34,7 @@ func main() {
 	token := domain.JwtToken{
 		AccessSecret: "super secret code",
 		RedisConn:    client,
-		AccessTtl:    10 * time.Minute,
+		AccessTtl:    30 * time.Minute,
 	}
 
 	e := echo.New()
@@ -44,6 +44,11 @@ func main() {
 	jwtUsecase := _usecase.NewJWTUseCase(token)
 
 	_handler.NewUserHandler(e, userUsecase, jwtUsecase)
+
+	// midd := _middl.InitAuthorization(jwtUsecase, token)
+	// infoGroup := e.Group("/info")
+	// infoGroup.Use(middleware.JWTWithConfig(midd.GetConfig))
+	// _handler.NewUserHandler(e, userUsecase, jwtUsecase)
 
 	err := e.Start("127.0.0.1:8080")
 	if err != nil && err != http.ErrServerClosed {
@@ -95,7 +100,7 @@ func connectDB() *pgxpool.Pool {
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
 		username VARCHAR (100) NOT NULL UNIQUE,
-		password VARCHAR (100) NOT NULL,
+		password TEXT NOT NULL,
 		iin VARCHAR (255) NOT NULL,
 		role VARCHAR (24) NOT NULL,
 		registerDate VARCHAR (255) NOT NULL
