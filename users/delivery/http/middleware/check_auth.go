@@ -44,6 +44,15 @@ func (a *Authorization) GetConfig() middleware.JWTConfig {
 	}
 }
 
+func (a *Authorization) SetHeaders(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+		c.Response().Header().Set("Content-Type", "application/json")
+		next(c)
+		return nil
+	}
+}
+
 // func (a *Authorization) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
 // 	return func(c echo.Context) error {
 // 		cookie, err := c.Cookie("access_token")

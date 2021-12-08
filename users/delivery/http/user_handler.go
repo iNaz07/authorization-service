@@ -22,14 +22,17 @@ type UserHandler struct {
 }
 
 func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsecase) {
+
 	handler := &UserHandler{UserUsecase: us, JwtUsecase: jwt}
 	midd := config.InitAuthorization(jwt)
+
+	e.GET("/", handler.Home, middleware.JWTWithConfig(midd.GetConfig()))
 	e.GET("/login", handler.LoginPage).Name = "userSignInForm"
 	e.POST("/login", handler.Signin)
-	e.POST("/signup", handler.Registration)
-	e.POST("/signup/admin", handler.AdminRegistration, middleware.JWTWithConfig(midd.GetConfig()))
 
 	e.GET("/signup", handler.RegistrationPage)
+	e.POST("/signup", handler.Registration, midd.SetHeaders)
+	e.POST("/signup/admin", handler.AdminRegistration, middleware.JWTWithConfig(midd.GetConfig()))
 
 	infoGroup := e.Group("/info")
 	infoGroup.Use(middleware.JWTWithConfig(midd.GetConfig()))
@@ -39,15 +42,22 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 
 }
 
+func (u *UserHandler) Home(e echo.Context) error {
+	return e.NoContent(http.StatusOK)
+}
+
 func (u *UserHandler) Signin(e echo.Context) error {
-	login, password := u.ExtractCreds(e)
-	// fmt.Println("from signin", login, password)
-	user, err := u.UserUsecase.GetUserByNameUsecase(login)
+
+	creds, err := u.ExtractBody(e)
 	if err != nil {
-		// fmt.Println("from signin checking user from db", err)
+		return e.String(http.StatusBadRequest, err.Error())
+	}
+
+	user, err := u.UserUsecase.GetUserByNameUsecase(creds.Username)
+	if err != nil {
 		return e.String(http.StatusForbidden, fmt.Sprintf("username is incorrect: %v", err))
 	}
-	if !utils.ComparePasswordHash(user.Password, password) {
+	if !utils.ComparePasswordHash(user.Password, creds.Password) {
 		return e.String(http.StatusForbidden, "password is incorrect: %v")
 	}
 
@@ -75,13 +85,15 @@ func (u *UserHandler) SetCookie(e echo.Context, signedToken string) {
 	e.SetCookie(cookie)
 }
 
-func (u *UserHandler) ExtractCreds(ctx echo.Context) (login string, pass string) {
-	return ctx.FormValue("login"), ctx.FormValue("password")
-}
-
 func (u *UserHandler) Registration(e echo.Context) error {
+
 	userInfo, err := u.ExtractBody(e)
-	// fmt.Println("from registration", userInfo, err)
+	if err != nil {
+		return e.String(http.StatusInternalServerError, err.Error())
+	}
+	if userInfo.Role == "admin" {
+		e.Redirect(http.StatusMovedPermanently, e.Echo().Reverse("userSignInForm"))
+	}
 	if err != nil {
 		return e.String(http.StatusInternalServerError, err.Error())
 	}
@@ -93,7 +105,7 @@ func (u *UserHandler) Registration(e echo.Context) error {
 
 func (u *UserHandler) AdminRegistration(e echo.Context) error {
 	userInfo, err := u.ExtractBody(e)
-	// fmt.Println("from registration", userInfo, err)
+
 	if err != nil {
 		return e.String(http.StatusInternalServerError, err.Error())
 	}
@@ -114,12 +126,11 @@ func (u *UserHandler) AdminRegistration(e echo.Context) error {
 }
 
 func (u *UserHandler) ExtractBody(ctx echo.Context) (*domain.User, error) {
-	var user *domain.User
-	fmt.Println("body is", ctx.Request().Body)
-	if err := json.NewDecoder(ctx.Request().Body).Decode(&user); err != nil {
-		return nil, fmt.Errorf("unmarshal body err: %w", err)
+	user := &domain.User{}
+	if err := ctx.Bind(user); err != nil {
+		return nil, fmt.Errorf("bind body err: %w", err)
 	}
-	//if checkbox admin true {register as admin}
+
 	if user.Role == "" {
 		user.Role = "user"
 	}
@@ -188,19 +199,11 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
 	}
 
-	account, err := GetAccountInfo(e, *user, "http://localhost:8181/account/info/"+user.IIN)
+	account, err := GetAccountInfo(e, *user, "http://localhost:8181/info/"+user.IIN)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("get acc info err: %v", err))
 	}
-	if len(account) == 0 {
-		return e.JSON(http.StatusOK, struct {
-			User     domain.User
-			Accounts string
-		}{User: *user, Accounts: "empty"})
-	}
-	for _, acc := range account {
-		acc.User = *user
-	}
+
 	return e.JSON(http.StatusOK, account)
 }
 
@@ -217,54 +220,54 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 	}
 
 	users, err := u.UserUsecase.GetAllUsecase()
-	fmt.Println("all users: ", &users, err)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err))
 	}
-	account := domain.Accounts{}
 
+	// account := domain.Accounts{}
 	all := []domain.Accounts{}
 
 	for _, user := range users {
-		fmt.Println("first user", user, user.IIN)
-		acc, err := GetAccountInfo(e, user, "http://localhost:8181/account/info/"+user.IIN)
+
+		acc, err := GetAccountInfo(e, user, "http://localhost:8181/info/"+user.IIN)
 		if err != nil {
 			return e.String(http.StatusInternalServerError, fmt.Sprintf("get account info error: %v", err))
 		}
-		if len(acc) == 0 {
-			account.User = user
-			all = append(all, account)
-			continue
-		}
-		for _, a := range acc {
-			a.User = user
-			all = append(all, a)
-		}
+		all = append(all, acc...)
 	}
 	return e.JSON(http.StatusOK, all)
 }
 
 func GetAccountInfo(e echo.Context, user domain.User, url string) ([]domain.Accounts, error) {
-	account := []domain.Accounts{}
+	account := domain.Accounts{}
+	all := []domain.Accounts{}
+
 	res, err := http.Get(url)
-	fmt.Println("resp from get req from ts:  ", res, "ERROR is: ", err)
 	if err != nil {
 		return nil, err
-		// return e.String(http.StatusInternalServerError, fmt.Sprintf("get user accounts error: %v", err))
 	}
+
 	resp, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
-		// return e.String(http.StatusInternalServerError, fmt.Sprintf("read body error: %v", err))
 	}
+
 	res.Body.Close()
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("get account error: StatusCode not 200")
-		// return e.String(res.StatusCode, fmt.Sprintf("get accounts info error: %v", string(resp)))
 	}
-	if err := json.Unmarshal(resp, &account); err != nil {
+
+	if err := json.Unmarshal(resp, &all); err != nil {
 		return nil, err
-		// return e.String(http.StatusInternalServerError, fmt.Sprintf("unmarshal responce err: %v", err))
 	}
-	return account, nil
+	if len(all) == 0 {
+		account.User = user
+		all = append(all, account)
+		return all, nil
+	}
+	for _, a := range all {
+		a.User = user
+		all = append(all, a)
+	}
+	return all, nil
 }
