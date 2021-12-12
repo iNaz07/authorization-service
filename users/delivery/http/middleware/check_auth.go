@@ -18,30 +18,31 @@ func InitAuthorization(jwtuc domain.JwtTokenUsecase) *Authorization {
 
 func (a *Authorization) GetConfig() middleware.JWTConfig {
 	return middleware.JWTConfig{
-		TokenLookup: "cookie:access-token",
-		ParseTokenFunc: func(auth string, c echo.Context) (interface{}, error) {
-			fmt.Println("token from access token cookie: ", auth)
-			info := make(map[int64]string)
-			id, err := a.JwtUsecase.ParseTokenAndGetID(auth)
-			fmt.Println("ID from middlware", id, err)
-			if err != nil {
-				return nil, err
-			}
-			if !a.JwtUsecase.FindToken(id, auth) {
-				fmt.Println("print if token not found from redis")
-				return nil, err
-			}
-			role, err := a.JwtUsecase.ParseTokenAndGetRole(auth)
-			fmt.Println("role from token: ", role, err)
-			if err != nil {
-				return nil, err
-			}
-			info[id] = role
-			return info, nil
-
-		},
+		TokenLookup:             "cookie:access-token",
+		ParseTokenFunc:          a.CheckToken,
 		ErrorHandlerWithContext: a.JwtUsecase.JWTErrorChecker,
 	}
+}
+
+func (a *Authorization) CheckToken(auth string, c echo.Context) (interface{}, error) {
+	fmt.Println("token from access token cookie: ", auth)
+	info := make(map[int64]string)
+	id, err := a.JwtUsecase.ParseTokenAndGetID(auth)
+	fmt.Println("ID from middlware", id, err)
+	if err != nil {
+		return nil, err
+	}
+	if !a.JwtUsecase.FindToken(id, auth) {
+		fmt.Println("print if token not found from redis")
+		return nil, err
+	}
+	role, err := a.JwtUsecase.ParseTokenAndGetRole(auth)
+	fmt.Println("role from token: ", role, err)
+	if err != nil {
+		return nil, err
+	}
+	info[id] = role
+	return info, nil
 }
 
 func (a *Authorization) SetHeaders(next echo.HandlerFunc) echo.HandlerFunc {

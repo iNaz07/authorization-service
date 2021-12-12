@@ -14,7 +14,7 @@ type JwtToken struct {
 }
 
 type JwtTokenUsecase interface {
-	GenerateToken(id int64, role string) (string, error)
+	GenerateToken(id int64, role, iin string) (string, error)
 	ParseTokenAndGetID(token string) (int64, error)
 	ParseTokenAndGetRole(token string) (string, error)
 	InsertToken(id int64, token string) error

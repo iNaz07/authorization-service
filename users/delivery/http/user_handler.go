@@ -38,10 +38,12 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 	infoGroup.Use(middleware.JWTWithConfig(midd.GetConfig()))
 
 	infoGroup.GET("", handler.GetAllUserInfo)
+
 	infoGroup.GET("/:id", handler.GetUserInfo)
 
 }
 
+//TODO: add info about user to show in front
 func (u *UserHandler) Home(e echo.Context) error {
 	return e.NoContent(http.StatusOK)
 }
@@ -61,7 +63,7 @@ func (u *UserHandler) Signin(e echo.Context) error {
 		return e.String(http.StatusForbidden, "password is incorrect: %v")
 	}
 
-	signedToken, err := u.JwtUsecase.GenerateToken(user.ID, user.Role)
+	signedToken, err := u.JwtUsecase.GenerateToken(user.ID, user.Role, user.IIN)
 	if err != nil {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("coundn't create token. Error: %v", err))
 	}
@@ -199,12 +201,25 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err))
 	}
 
-	account, err := GetAccountInfo(e, *user, "http://localhost:8181/info/"+user.IIN)
+	account := domain.Accounts{}
+	all := []domain.Accounts{}
+
+	acc, err := GetAccountInfo(e, user.IIN)
 	if err != nil {
-		return e.String(http.StatusInternalServerError, fmt.Sprintf("get acc info err: %v", err))
+		return err
+	}
+	if len(all) == 0 {
+		account.User = *user
+		all = append(all, account)
+	} else {
+		for _, a := range all {
+			a.User = *user
+			all = append(all, a)
+		}
+		all = append(all, acc...)
 	}
 
-	return e.JSON(http.StatusOK, account)
+	return e.JSON(http.StatusOK, all)
 }
 
 func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
@@ -224,50 +239,63 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 		return e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err))
 	}
 
-	// account := domain.Accounts{}
+	account := domain.Accounts{}
 	all := []domain.Accounts{}
 
 	for _, user := range users {
 
-		acc, err := GetAccountInfo(e, user, "http://localhost:8181/info/"+user.IIN)
+		acc, err := GetAccountInfo(e, user.IIN)
 		if err != nil {
-			return e.String(http.StatusInternalServerError, fmt.Sprintf("get account info error: %v", err))
+			return err
 		}
-		all = append(all, acc...)
+		if len(all) == 0 {
+			account.User = user
+			all = append(all, account)
+		} else {
+			for _, a := range all {
+				a.User = user
+				all = append(all, a)
+			}
+			all = append(all, acc...)
+		}
 	}
 	return e.JSON(http.StatusOK, all)
 }
 
-func GetAccountInfo(e echo.Context, user domain.User, url string) ([]domain.Accounts, error) {
-	account := domain.Accounts{}
+func GetAccountInfo(e echo.Context, iin string) ([]domain.Accounts, error) {
 	all := []domain.Accounts{}
 
-	res, err := http.Get(url)
+	cookie, err := e.Cookie("access-token")
 	if err != nil {
-		return nil, err
+		return nil, e.String(http.StatusForbidden, err.Error())
+	}
+
+	req, err := http.NewRequest("GET", "http://localhost:8181/account/info/"+iin, nil)
+	if err != nil {
+		return nil, e.String(http.StatusInternalServerError, fmt.Sprintf("create request error: %v", err))
+	}
+	req.AddCookie(cookie)
+
+	client := &http.Client{}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return nil, e.String(http.StatusBadRequest, err.Error())
 	}
 
 	resp, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return nil, e.String(http.StatusInternalServerError, err.Error())
 	}
-
 	res.Body.Close()
+
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("get account error: StatusCode not 200")
+		return nil, e.String(res.StatusCode, string(resp))
 	}
 
 	if err := json.Unmarshal(resp, &all); err != nil {
-		return nil, err
+		return nil, e.String(http.StatusInternalServerError, err.Error())
 	}
-	if len(all) == 0 {
-		account.User = user
-		all = append(all, account)
-		return all, nil
-	}
-	for _, a := range all {
-		a.User = user
-		all = append(all, a)
-	}
+
 	return all, nil
 }

@@ -19,11 +19,12 @@ func NewJWTUseCase(token domain.JwtToken) domain.JwtTokenUsecase {
 	return &jwtUsecase{token: token}
 }
 
-func (j *jwtUsecase) GenerateToken(id int64, role string) (string, error) {
+func (j *jwtUsecase) GenerateToken(id int64, role, iin string) (string, error) {
 	accessTokenClaims := jwt.MapClaims{}
 
 	accessTokenClaims["id"] = id
 	accessTokenClaims["role"] = role
+	accessTokenClaims["iin"] = iin
 	accessTokenClaims["iat"] = time.Now().Unix()
 	accessTokenClaims["exp"] = time.Now().Add(j.token.AccessTtl).Unix()
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
