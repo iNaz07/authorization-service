@@ -55,11 +55,11 @@ func main() {
 func connectRedis() *redis.Client {
 
 	address := viper.GetString(`redis.address`)
-	// password := viper.GetString(`redis.password`)
+	password := viper.GetString(`redis.password`)
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     address,
-		Password: "",
+		Password: password,
 		DB:       0,
 	})
 
@@ -98,12 +98,12 @@ func connectDB() *pgxpool.Pool {
 
 	//temporary
 	//move all to init.sql
-	// _, err = db.Exec(ctx, `
-	// DROP TABLE users;
-	// `)
-	// if err != nil {
-	// 	log.Fatalf("Drop table error: %v", err)
-	// }
+	_, err = db.Exec(ctx, `
+	DROP TABLE users;
+	`)
+	if err != nil {
+		log.Fatalf("Drop table error: %v", err)
+	}
 	_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY UNIQUE,

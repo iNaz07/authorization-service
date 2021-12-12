@@ -3,7 +3,7 @@ version: '3.1'
 services:
   redis:
     image: redis
+    command: redis-server --requirepass qwerty
     ports:
       - 127.0.0.1:6379:6379
-    environment:
-      - password="qwerty"
+   
