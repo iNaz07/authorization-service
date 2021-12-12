@@ -17,8 +17,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-//TODO: move to env
-
 func init() {
 	viper.SetConfigFile("../config.json")
 	if err := viper.ReadInConfig(); err != nil {

@@ -248,15 +248,14 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 		if err != nil {
 			return err
 		}
-		if len(all) == 0 {
+		if len(acc) == 0 {
 			account.User = user
 			all = append(all, account)
 		} else {
-			for _, a := range all {
+			for _, a := range acc {
 				a.User = user
 				all = append(all, a)
 			}
-			all = append(all, acc...)
 		}
 	}
 	return e.JSON(http.StatusOK, all)
@@ -292,7 +291,7 @@ func GetAccountInfo(e echo.Context, iin string) ([]domain.Accounts, error) {
 	if res.StatusCode != 200 {
 		return nil, e.String(res.StatusCode, string(resp))
 	}
-
+	fmt.Println("resp from tr service", string(resp))
 	if err := json.Unmarshal(resp, &all); err != nil {
 		return nil, e.String(http.StatusInternalServerError, err.Error())
 	}

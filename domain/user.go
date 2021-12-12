@@ -11,10 +11,10 @@ type User struct {
 
 type Accounts struct {
 	User            User
-	Number          string
-	Balance         int64
-	RegisterDate    string
-	LastTransaction string
+	Number          string `json:"number"`
+	Balance         int64  `json:"balance"`
+	RegisterDate    string `json:"registerDate"`
+	LastTransaction string `json:"lasttransaction"`
 }
 
 type UserRepository interface {
