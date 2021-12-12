@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	viper.SetConfigFile("../config.json")
+	viper.SetConfigFile("config.json")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal("get configuration error: ", err)
 	}
@@ -96,12 +96,12 @@ func connectDB() *pgxpool.Pool {
 
 	//temporary
 	//move all to init.sql
-	_, err = db.Exec(ctx, `
-	DROP TABLE users;
-	`)
-	if err != nil {
-		log.Fatalf("Drop table error: %v", err)
-	}
+	// _, err = db.Exec(ctx, `
+	// DROP TABLE users;
+	// `)
+	// if err != nil {
+	// 	log.Fatalf("Drop table error: %v", err)
+	// }
 	_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY UNIQUE,
