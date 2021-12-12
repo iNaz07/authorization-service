@@ -14,51 +14,51 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo/v4"
+	"github.com/spf13/viper"
 )
 
 //TODO: move to env
-const (
-	username = "postgres"
-	password = "password"
-	hostname = "localhost" //change as in docker-compose
-	port     = 5432
-	dbname   = "transaction" //change as in init.sql
-)
+
+func init() {
+	viper.SetConfigFile("../config.json")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal("get configuration error: ", err)
+	}
+}
 
 func main() {
 
 	client := connectRedis()
-	db := connectDB()
-	defer db.Close()
 
 	token := domain.JwtToken{
-		AccessSecret: "super secret code",
+		AccessSecret: viper.GetString(`token.secret`),
 		RedisConn:    client,
-		AccessTtl:    30 * time.Minute,
+		AccessTtl:    viper.GetDuration(`token.ttl`) * time.Minute,
 	}
 
-	e := echo.New()
+	db := connectDB()
+	defer db.Close()
 
 	userRepo := _repo.NewUserRepository(db)
 	userUsecase := _usecase.NewUserUseCase(userRepo)
 	jwtUsecase := _usecase.NewJWTUseCase(token)
 
+	e := echo.New()
 	_handler.NewUserHandler(e, userUsecase, jwtUsecase)
 
-	// midd := _middl.InitAuthorization(jwtUsecase, token)
-	// infoGroup := e.Group("/info")
-	// infoGroup.Use(middleware.JWTWithConfig(midd.GetConfig))
-	// _handler.NewUserHandler(e, userUsecase, jwtUsecase)
-
-	err := e.Start("127.0.0.1:8080")
+	err := e.Start(viper.GetString(`addr`))
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(`shutting down the server`, err) //better do not fatal, cuz defer wouldn't done. think bout it
 	}
 }
 
 func connectRedis() *redis.Client {
+
+	address := viper.GetString(`redis.address`)
+	// password := viper.GetString(`redis.password`)
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     address,
 		Password: "",
 		DB:       0,
 	})
@@ -71,15 +71,20 @@ func connectRedis() *redis.Client {
 }
 
 func connectDB() *pgxpool.Pool {
+
+	username := viper.GetString(`postgres.user`)
+	password := viper.GetString(`postgres.password`) //"password"
+	hostname := viper.GetString(`postgres.host`)     //"localhost"
+	port := viper.GetInt(`postgres.port`)            //5432
+	dbname := viper.GetString(`postgres.dbname`)     //auth
+
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, hostname, port, dbname)
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		log.Fatalf("Open db error: %v", err)
 	}
-	// should read bout them
-	// config.MaxConns = 25
-	// config.MaxConnLifetime = 5 * time.Minute
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
 	db, err := pgxpool.ConnectConfig(ctx, config)
@@ -90,20 +95,23 @@ func connectDB() *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("Ping db error: %v", err)
 	}
-	_, err = db.Exec(ctx, `
-	DROP TABLE users;
-	`)
-	if err != nil {
-		log.Fatalf("Drop table error: %v", err)
-	}
+
+	//temporary
+	//move all to init.sql
+	// _, err = db.Exec(ctx, `
+	// DROP TABLE users;
+	// `)
+	// if err != nil {
+	// 	log.Fatalf("Drop table error: %v", err)
+	// }
 	_, err = db.Exec(ctx, `
 	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		username VARCHAR (100) NOT NULL UNIQUE,
+		id SERIAL PRIMARY KEY UNIQUE,
+		username VARCHAR (255) NOT NULL UNIQUE,
 		password TEXT NOT NULL,
-		iin VARCHAR (255) NOT NULL,
+		iin VARCHAR (255) NOT NULL UNIQUE,
 		role VARCHAR (24) NOT NULL,
-		registerDate VARCHAR (255) NOT NULL
+		registerDate TEXT NOT NULL
 	);
 	`)
 	if err != nil {

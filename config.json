@@ -1,0 +1,22 @@
+{
+    "addr": "localhost:8080",     
+    
+    "postgres": {
+        "user":"postgres",
+        "password":"password",
+        "host":"localhost", 
+        "port":5432,
+        "dbname":"auth" 
+    },
+
+    "redis": {
+        "address":"localhost:6379",
+        "password":"qwerty"
+    },
+
+    "token": {
+        "secret": "super secret code",
+        "ttl":    30
+    }   
+}
+
