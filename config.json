@@ -1,5 +1,5 @@
 {
-    "addr": "localhost:8080",     
+    "addr": ":8080",     
     
     "postgres": {
         "user":"postgres",

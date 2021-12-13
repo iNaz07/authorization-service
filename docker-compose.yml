@@ -26,6 +26,7 @@ services:
       - app
   web:
     build: .
+    image: authorization-service_web
     depends_on:
       - redis
       - db
