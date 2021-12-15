@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"transaction-service/domain"
 
 	"github.com/labstack/echo/v4"
@@ -25,19 +24,15 @@ func (a *Authorization) GetConfig() middleware.JWTConfig {
 }
 
 func (a *Authorization) CheckToken(auth string, c echo.Context) (interface{}, error) {
-	fmt.Println("token from access token cookie: ", auth)
 
 	id, err := a.JwtUsecase.ParseTokenAndGetID(auth)
-	fmt.Println("ID from middlware", id, err)
 	if err != nil {
 		return nil, err
 	}
 	if !a.JwtUsecase.FindToken(id, auth) {
-		fmt.Println("print if token not found from redis")
 		return nil, err
 	}
 	role, err := a.JwtUsecase.ParseTokenAndGetRole(auth)
-	fmt.Println("role from token: ", role, err)
 	if err != nil {
 		return nil, err
 	}

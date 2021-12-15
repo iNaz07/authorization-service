@@ -58,7 +58,6 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 
 }
 
-//TODO: add info about user to show in front
 func (u *UserHandler) Home(e echo.Context) error {
 	meta, ok := e.Get("user").(domain.User)
 	if !ok {
@@ -213,7 +212,6 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		Accounts: acc,
 	}
 
-	fmt.Println("user info", info)
 	return e.Render(http.StatusOK, "userinfo.html", info)
 }
 
