@@ -1,9 +1,7 @@
-  1. check new endpoints
-  2. add middleware 
-  4
-  
+ 1. change config file to below data when running in docker
 
 Done:
+ 1. check new endpoints
 6. set cookie with token when login
 1. check password from register and gecode it 
 3. validate iin when register
@@ -13,3 +11,33 @@ Done:
 5. add endpoints to get info about user
 2. parsetoken function with id
   3. parsetoken func with role
+  2. add middleware 
+
+
+  {
+    "addr": ":8080",     
+    
+    "postgres": {
+        "user":"postgres",
+        "password":"password",
+        "host":"db", 
+        "port":5432,
+        "dbname":"auth" 
+    },
+
+    "redis": {
+        "address":"redis:6379",
+        "password":"qwerty"
+    },
+
+    "token": {
+        "secret": "super secret code",
+        "ttl":    30
+    }   
+}
+
+
+
+
+<a href="/info/{{.ID}}">My Profile</a> {{if .Role "admin"}}
+    <a href="/info/all"></a> {{else}} {{end}}

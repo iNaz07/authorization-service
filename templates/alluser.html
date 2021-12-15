@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+
+<body>
+    <a href="/user/home">back</a>
+    <h1>All USER</h1>
+    {{ range . }}
+    <div style="border-color: black;">
+        <div style="border-color: gray;">
+            <p>Username: {{ .User.Username }}</p>
+            <p>IIN: {{ .User.IIN }} </p>
+            <p>Date of registration: {{ .User.RegisterDate}} </p>
+        </div>
+        <div style="border-color: gray;">
+            {{range .Accounts }} {{$sliceLen := len .Number}} {{if gt $sliceLen 0}}
+            <p>Account number: {{ .Number}} </p>
+            <p>Available money: {{ .Balance}} </p>
+            <p>Registration date: {{ .RegisterDate}} </p>
+            <p>Last transaction date: {{ .LastTransaction}} </p>
+            {{else}} No avaialble accounts yet {{end}} {{end}}
+        </div>
+    </div>
+
+    {{end}}
+</body>
+
+</html>

@@ -1,29 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-    
+
     <div class="login-container">
         <section class="login" id="login">
-          <header>
-            <h2>Authorizatin service</h2>
-            <h4>Login</h4>
-          </header>
-          <form class="login-form" action="#" method="post">
-            <input type="text" class="login-input" name="username" placeholder="Username" required autofocus/>
-            <input type="password" class="login-input" name="password" placeholder="Password" required/>
-            <button type="submit" class="login-button">SIGN IN</button>
-            <div class="submit-container">
-              <button type="submit" class="login-button">SIGN IN</button>
-            </div>
-          </form>
+            <header>
+                <h2>Welcome to authorizatin service</h2>
+            </header>
+            <p> {{ . }} </p>
+
+            <form class="login-form" action="login" method="post">
+                <input type="text" class="login-input" name="username" placeholder="Username" required autofocus/><br>
+                <input type="password" class="login-input" name="password" placeholder="Password" required/>
+                <div class="submit-container">
+                    <button type="submit" class="login-button">Login</button>
+                </div>
+                <div>
+                    <p class="tab-group">Register here
+                        <a href="/signup">Sign Up</a></p>
+                </div>
+            </form>
         </section>
-      </div>
+    </div>
 
 </body>
+
 </html>
+
+
+<!-- <html>
+ <head>
+ </head>
+ <body>
+ <form action="/login" method="post">
+ 	<label for="login">Login:</label> <br>
+ 	<input type="text" id="login" name="login"> <br>
+ 	<label for="password">Password:</label> <br>
+ 	<input type="text" id="password" name="password"> <br>
+ 	<input type="submit" value="Sign in">
+ </form>
+ </body>
+ </html> -->

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+
+<body>
+
+    {{$role := len .User.Role}} {{if gt $role 4}}
+    <a href="/user/info/all">back</a> {{end}}
+    <h3>Profile</h3>
+
+    <div style="border-radius: 10px; border-color: green  ">
+        <p>Username: {{ .User.Username }}</p>
+        <p>IIN: {{ .User.IIN }} </p>
+        <p>Date of registration: {{ .User.RegisterDate}} </p>
+    </div>
+    <div id="accounts" style="border-radius: 10px; border-color: green;">
+
+        {{ range .Accounts }}
+        <p>Account number: {{ .Number}} </p>
+        <p>Available money: {{ .Balance}} </p>
+        <p>Registration date: {{ .RegisterDate}} </p>
+        <p>Last transaction date: {{ .LastTransaction}} </p>
+
+    </div>
+    {{end}}
+    <script>
+        let acc = document.getElementById("accounts")
+        if (acc.innerText == "") {
+            let p = document.createElement("p")
+            p.innerText = "No avaialble accounts yet"
+            acc.appendChild(p)
+        }
+    </script>
+</body>
+
+</html>

@@ -18,12 +18,13 @@ import (
 )
 
 func init() {
-	viper.SetConfigFile("config.json")
+	viper.SetConfigFile("../config.json")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal("get configuration error: ", err)
 	}
 }
 
+//TODO: graceful shutdown
 func main() {
 
 	client := connectRedis()
@@ -46,7 +47,7 @@ func main() {
 
 	err := e.Start(viper.GetString(`addr`))
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(`shutting down the server`, err) //better do not fatal, cuz defer wouldn't done. think bout it
+		log.Fatal(`shutting down the server`, err)
 	}
 }
 
@@ -71,10 +72,10 @@ func connectRedis() *redis.Client {
 func connectDB() *pgxpool.Pool {
 
 	username := viper.GetString(`postgres.user`)
-	password := viper.GetString(`postgres.password`) //"password"
-	hostname := viper.GetString(`postgres.host`)     //"localhost"
-	port := viper.GetInt(`postgres.port`)            //5432
-	dbname := viper.GetString(`postgres.dbname`)     //auth
+	password := viper.GetString(`postgres.password`)
+	hostname := viper.GetString(`postgres.host`)
+	port := viper.GetInt(`postgres.port`)
+	dbname := viper.GetString(`postgres.dbname`)
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s", username, password, hostname, port, dbname)
 
@@ -93,9 +94,9 @@ func connectDB() *pgxpool.Pool {
 	if err := db.Ping(ctx); err != nil {
 		log.Fatalf("Ping db error: %v", err)
 	}
-
+	//TODO: move all to init.sql
 	//temporary
-	//move all to init.sql
+
 	// _, err = db.Exec(ctx, `
 	// DROP TABLE users;
 	// `)

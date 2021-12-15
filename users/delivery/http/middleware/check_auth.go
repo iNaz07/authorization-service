@@ -26,7 +26,7 @@ func (a *Authorization) GetConfig() middleware.JWTConfig {
 
 func (a *Authorization) CheckToken(auth string, c echo.Context) (interface{}, error) {
 	fmt.Println("token from access token cookie: ", auth)
-	info := make(map[int64]string)
+
 	id, err := a.JwtUsecase.ParseTokenAndGetID(auth)
 	fmt.Println("ID from middlware", id, err)
 	if err != nil {
@@ -41,41 +41,18 @@ func (a *Authorization) CheckToken(auth string, c echo.Context) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	info[id] = role
+	info := domain.User{
+		ID:   id,
+		Role: role,
+	}
 	return info, nil
 }
 
 func (a *Authorization) SetHeaders(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
-		c.Response().Header().Set("Content-Type", "application/json")
+		c.Response().Header().Set("Content-Type", "text/html")
 		next(c)
 		return nil
 	}
 }
-
-// func (a *Authorization) CheckAuth(next echo.HandlerFunc) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-// 		cookie, err := c.Cookie("access_token")
-// 		if err != nil {
-// 			return c.String(http.StatusForbidden, fmt.Sprintf("cookie not found: %v", err))
-// 		}
-// 		id, err := a.JwtUsecase.ParseTokenAndGetID(cookie.Value)
-// 		if err != nil {
-// 			return c.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
-// 		}
-// 		if !a.JwtUsecase.FindToken(id, cookie.Value) {
-// 			return c.String(http.StatusForbidden, fmt.Sprintf("invalid token: %v", err))
-// 		}
-// 		role, err := a.JwtUsecase.ParseTokenAndGetRole(cookie.Value)
-// 		if err != nil {
-// 			return c.String(http.StatusInternalServerError, fmt.Sprintf("parse token error: %v", err))
-// 		}
-// 		key := strconv.Itoa(int(id))
-// 		// type value string
-// 		// c.Set(key, value(role))
-// 		c.Set(key, role)
-// 		next(c)
-// 		return nil
-// 	}
-// }

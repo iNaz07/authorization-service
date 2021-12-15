@@ -10,17 +10,21 @@ type User struct {
 }
 
 type Accounts struct {
-	User            User
 	Number          string `json:"number"`
 	Balance         int64  `json:"balance"`
 	RegisterDate    string `json:"registerDate"`
 	LastTransaction string `json:"lasttransaction"`
 }
 
+type UserInfo struct {
+	User     User
+	Accounts []Accounts
+}
+
 type UserRepository interface {
 	CreateUser(user *User) error
-	GetUserByID(id int64) (*User, error)              //надо подумать нужно ли?
-	GetUserByUsername(username string) (*User, error) // то же, можно ли допускать одинаковые имена, или это уникальные ники?
+	GetUserByID(id int64) (*User, error) //надо подумать нужно ли?
+	GetUserByUsername(username string) (*User, error)
 	GetUserByIIN(iin string) (*User, error)
 	GetAllUsers() ([]User, error)
 	DeleteUserByIIN(iin string) error //зависит от предыдущих ответов

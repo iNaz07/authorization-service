@@ -27,17 +27,6 @@ func (u *userRepository) CreateUser(user *domain.User) error {
 	return nil
 }
 
-// No need yet
-// func (u *userRepository) AddRoleToUser(id int, role string) error {
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
-// 	defer cancel()
-// 	if _, err := u.Conn.Exec(ctx, "UPDATE users SET role=$1 WHERE id=$2",
-// 		role, id); err != nil {
-// 		return fmt.Errorf("dbInsertUser: %w", err)
-// 	}
-// 	return nil
-// }
-
 func (u *userRepository) GetUserByID(id int64) (*domain.User, error) {
 
 	user := &domain.User{}
