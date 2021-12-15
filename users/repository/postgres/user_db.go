@@ -34,8 +34,8 @@ func (u *userRepository) GetUserByID(id int64) (*domain.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	if err := u.Conn.QueryRow(ctx, "SELECT iin, username, registerdate FROM users WHERE id=$1", id).
-		Scan(&user.IIN, &user.Username, &user.RegisterDate); err != nil {
+	if err := u.Conn.QueryRow(ctx, "SELECT iin, username, role, registerdate FROM users WHERE id=$1", id).
+		Scan(&user.IIN, &user.Username, &user.Role, &user.RegisterDate); err != nil {
 		return nil, err
 	}
 
@@ -79,14 +79,14 @@ func (u *userRepository) GetAllUsers() ([]domain.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	rows, err := u.Conn.Query(ctx, "SELECT id, iin, username, registerdate FROM users")
+	rows, err := u.Conn.Query(ctx, "SELECT id, iin, username, role, registerdate FROM users")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&user.ID, &user.IIN, &user.Username, &user.RegisterDate); err != nil {
+		if err := rows.Scan(&user.ID, &user.IIN, &user.Username, &user.Role, &user.RegisterDate); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

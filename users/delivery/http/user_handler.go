@@ -55,7 +55,7 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 
 	infoGroup.GET("/info/all", handler.GetAllUserInfo)
 	infoGroup.GET("/info/:id", handler.GetUserInfo)
-	infoGroup.POST("/upgrade/:username", handler.UpgradeRole)
+	infoGroup.GET("/upgrade/:username", handler.UpgradeRole)
 	infoGroup.GET("/home", handler.Home)
 
 }
@@ -146,7 +146,7 @@ func (u *UserHandler) UpgradeRole(e echo.Context) error {
 		log.Printf("upgrade error: %v", err)
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again")
 	}
-	return e.Render(http.StatusOK, "error.html", fmt.Sprintf("User %s upgraded to administrator"))
+	return e.Render(http.StatusOK, "error.html", fmt.Sprintf("User %s upgraded to administrator", username))
 }
 
 //no need
@@ -204,7 +204,6 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		// return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err)) logg
 		return e.Render(http.StatusBadRequest, "error.html", "user not found")
 	}
-
 	acc, err := GetAccountInfo(e, user.IIN)
 	if err != nil {
 		return err

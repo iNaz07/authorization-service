@@ -16,6 +16,7 @@
         <div style="border-color: gray;">
             <p>Username: {{ .User.Username }}</p>
             <p>IIN: {{ .User.IIN }} </p>
+            <p>Role: {{ .User.Role }}</p>
             <p>Date of registration: {{ .User.RegisterDate}} </p>
             <a href="/user/upgrade/{{ .User.Username }}">Upgrade</a>
         </div>
