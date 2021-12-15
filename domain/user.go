@@ -23,11 +23,11 @@ type UserInfo struct {
 
 type UserRepository interface {
 	CreateUser(user *User) error
-	GetUserByID(id int64) (*User, error) //надо подумать нужно ли?
+	GetUserByID(id int64) (*User, error)
 	GetUserByUsername(username string) (*User, error)
 	GetUserByIIN(iin string) (*User, error)
 	GetAllUsers() ([]User, error)
-	DeleteUserByIIN(iin string) error //зависит от предыдущих ответов
+	UpgradeUserRepo(username string) error
 }
 
 type UserUsecase interface {
@@ -36,5 +36,5 @@ type UserUsecase interface {
 	GetUserByIINUsecase(iin string) (*User, error)
 	GetUserByIDUsecase(id int64) (*User, error)
 	GetAllUsecase() ([]User, error)
-	DeleteUserUsecase(iin string) error
+	UpgradeUserUsecase(username string) error
 }

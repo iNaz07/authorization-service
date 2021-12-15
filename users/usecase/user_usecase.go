@@ -15,7 +15,6 @@ func NewUserUseCase(repo domain.UserRepository) domain.UserUsecase {
 	return &userUsecase{repo}
 }
 
-//TODO: validate name, password, iin
 func (u *userUsecase) CreateUserUsecase(user *domain.User) error {
 	if _, err := u.userRepo.GetUserByIIN(user.IIN); err == nil {
 		return fmt.Errorf("user already registered by iin: %w", err)
@@ -69,9 +68,9 @@ func (u *userUsecase) GetAllUsecase() ([]domain.User, error) {
 	return users, nil
 }
 
-func (u *userUsecase) DeleteUserUsecase(iin string) error {
-	if err := u.userRepo.DeleteUserByIIN(iin); err != nil {
-		return fmt.Errorf("delete user error: %w", err)
+func (u *userUsecase) UpgradeUserUsecase(username string) error {
+	if err := u.userRepo.UpgradeUserRepo(username); err != nil {
+		return fmt.Errorf("upgrade error: %w", err)
 	}
 	return nil
 }

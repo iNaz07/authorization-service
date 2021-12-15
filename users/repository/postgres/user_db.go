@@ -98,11 +98,12 @@ func (u *userRepository) GetAllUsers() ([]domain.User, error) {
 	return users, nil
 }
 
-func (u *userRepository) DeleteUserByIIN(iin string) error {
-
+func (u *userRepository) UpgradeUserRepo(username string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
-
-	_, err := u.Conn.Exec(ctx, "DELETE FROM users WHERE iin=$1", iin)
-	return err
+	if _, err := u.Conn.Exec(ctx, "UPDATE users SET role=$1 WHERE username=$2",
+		"admin", username); err != nil {
+		return fmt.Errorf("db upgrade: %w", err)
+	}
+	return nil
 }

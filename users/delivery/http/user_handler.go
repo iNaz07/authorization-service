@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -54,6 +55,7 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 
 	infoGroup.GET("/info/all", handler.GetAllUserInfo)
 	infoGroup.GET("/info/:id", handler.GetUserInfo)
+	infoGroup.POST("/upgrade/:username", handler.UpgradeRole)
 	infoGroup.GET("/home", handler.Home)
 
 }
@@ -128,23 +130,23 @@ func (u *UserHandler) Registration(e echo.Context) error {
 }
 
 //no need ?
-func (u *UserHandler) AdminRegistration(e echo.Context) error {
+func (u *UserHandler) UpgradeRole(e echo.Context) error {
 
-	userInfo := u.ExtractCreds(e)
-	meta, ok := e.Get("user").(map[int64]string)
+	username := e.Param("username")
+	meta, ok := e.Get("user").(domain.User)
 	if !ok {
-		return e.String(http.StatusInternalServerError, "cannot get meta info")
+		return e.String(http.StatusForbidden, "Access denied. Please authorize")
 	}
 
-	for _, role := range meta {
-		if role != "admin" {
-			return e.String(http.StatusForbidden, "access denied")
-		}
+	if meta.Role != "admin" {
+		return e.String(http.StatusForbidden, "Access denied")
 	}
-	if err := u.UserUsecase.CreateUserUsecase(userInfo); err != nil {
-		return e.String(http.StatusBadRequest, err.Error())
+
+	if err := u.UserUsecase.UpgradeUserUsecase(username); err != nil {
+		log.Printf("upgrade error: %v", err)
+		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again")
 	}
-	return e.Render(http.StatusOK, "userinfo.html", userInfo)
+	return e.Render(http.StatusOK, "error.html", fmt.Sprintf("User %s upgraded to administrator"))
 }
 
 //no need

@@ -17,6 +17,7 @@
             <p>Username: {{ .User.Username }}</p>
             <p>IIN: {{ .User.IIN }} </p>
             <p>Date of registration: {{ .User.RegisterDate}} </p>
+            <a href="/user/upgrade/{{ .User.Username }}">Upgrade</a>
         </div>
         <div style="border-color: gray;">
             {{range .Accounts }} {{$sliceLen := len .Number}} {{if gt $sliceLen 0}}
