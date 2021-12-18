@@ -13,6 +13,10 @@ Done:
   3. parsetoken func with role
   2. add middleware 
 
+-ldflags '-linkmode external -extldflags "-static"' -tags netgo -installsuffix netgo
+
+
+# file cmd | tr . '\n'    cmd - binary file
 
   {
     "addr": ":8080",     

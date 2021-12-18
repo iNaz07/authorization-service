@@ -1,22 +1,21 @@
 {
-    "addr": ":8080",     
-    
+    "addr": ":8080",
+
     "postgres": {
-        "user":"postgres",
-        "password":"password",
-        "host":"", 
-        "port":5432,
-        "dbname":"auth" 
+        "user": "postgres",
+        "password": "password",
+        "host": "db",
+        "port": 5432,
+        "dbname": "auth"
     },
 
     "redis": {
-        "address":":6379",
-        "password":"qwerty"
+        "address": "redis:6379",
+        "password": "qwerty"
     },
 
     "token": {
         "secret": "super secret code",
-        "ttl":    30
-    }   
+        "ttl": 30
+    }
 }
-

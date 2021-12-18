@@ -47,7 +47,7 @@ func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsec
 
 	e.GET("/signup", handler.RegistrationPage)
 	e.POST("/signup", handler.Registration)
-
+	//no need?
 	e.GET("/", handler.Home, middleware.JWTWithConfig(midd.GetConfig()))
 
 	infoGroup := e.Group("/user")
@@ -71,7 +71,7 @@ func (u *UserHandler) Home(e echo.Context) error {
 		fmt.Println(err.Error()) //log
 		return e.String(http.StatusForbidden, "Access denied")
 	}
-
+	// return e.JSON(http.StatusOK, user)
 	return e.Render(http.StatusOK, "home.html", user)
 }
 
@@ -88,7 +88,7 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	}
 	if !utils.ComparePasswordHash(user.Password, creds.Password) {
 		fmt.Println("compare passwords", user.Password, creds.Password)
-		e.String(http.StatusForbidden, "password is incorrect") //to logs
+		// return e.String(http.StatusForbidden, "password is incorrect") //to logs
 		return e.Render(http.StatusForbidden, "error.html", "password is incorrect")
 	}
 
@@ -96,14 +96,18 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	if err != nil {
 		fmt.Println("error when generating new token: ", err) //to log
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again in several minutes")
+		// return e.String(http.StatusInternalServerError, "generate token error")
+
 	}
 
 	if err := u.JwtUsecase.InsertToken(user.ID, signedToken); err != nil {
 		fmt.Println("error when inserting token into redis", err) //log
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again in several minutes")
+		// return e.String(http.StatusInternalServerError, "insert error")
 	}
 
 	u.SetCookie(e, signedToken)
+	// return e.JSON(http.StatusOK, user)
 	return e.Render(http.StatusOK, "home.html", user)
 }
 
@@ -126,10 +130,10 @@ func (u *UserHandler) Registration(e echo.Context) error {
 		// return e.String(http.StatusBadRequest, err.Error())      // to logs
 		return e.Render(http.StatusBadRequest, "error.html", err.Error())
 	}
-	return e.Render(http.StatusOK, "login.html", "Successfully registered. Now you can log in")
+	// return e.JSON(http.StatusCreated, "Successfully registered. Now you can log in")
+	return e.Render(http.StatusCreated, "login.html", "Successfully registered. Now you can log in")
 }
 
-//no need ?
 func (u *UserHandler) UpgradeRole(e echo.Context) error {
 
 	username := e.Param("username")
@@ -146,23 +150,8 @@ func (u *UserHandler) UpgradeRole(e echo.Context) error {
 		log.Printf("upgrade error: %v", err)
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again")
 	}
+	// return e.String(http.StatusOK, fmt.Sprintf("User %s upgraded to administrator", username))
 	return e.Render(http.StatusOK, "error.html", fmt.Sprintf("User %s upgraded to administrator", username))
-}
-
-//no need
-func (u *UserHandler) checkAuth(e echo.Context) bool {
-
-	meta, ok := e.Get("user").(map[int64]string)
-	if !ok {
-		return false
-	}
-
-	for _, role := range meta {
-		if role != "admin" {
-			return false
-		}
-	}
-	return true
 }
 
 func (u *UserHandler) ExtractCreds(c echo.Context) *domain.User {
@@ -212,7 +201,7 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		User:     *user,
 		Accounts: acc,
 	}
-
+	// return e.JSON(http.StatusOK, info)
 	return e.Render(http.StatusOK, "userinfo.html", info)
 }
 
@@ -225,9 +214,9 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 	}
 
 	if meta.Role != "admin" {
+
 		return e.String(http.StatusForbidden, "Access denied.")
 	}
-
 	users, err := u.UserUsecase.GetAllUsecase()
 	if err != nil {
 		e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err)) //logg
@@ -239,6 +228,7 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 	for _, user := range users {
 		acc, err := GetAccountInfo(e, user.IIN)
 		if err != nil {
+			// return e.JSON(http.StatusOK, users) TODO: norm resp to client
 			return err
 		}
 
@@ -249,6 +239,7 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 		all = append(all, info)
 	}
 	return e.Render(http.StatusOK, "alluser.html", all)
+	// return e.JSON(http.StatusOK, all)
 }
 
 func GetAccountInfo(e echo.Context, iin string) ([]domain.Accounts, error) {
