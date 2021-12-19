@@ -66,7 +66,9 @@ func (u *UserHandler) Home(e echo.Context) error {
 		return e.String(http.StatusInternalServerError, "cannot get meta info")
 	}
 
-	user, err := u.UserUsecase.GetUserByIDUsecase(meta.ID)
+	ctx := e.Request().Context()
+
+	user, err := u.UserUsecase.GetUserByIDUsecase(ctx, meta.ID)
 	if err != nil {
 		fmt.Println(err.Error()) //log
 		return e.String(http.StatusForbidden, "Access denied")
@@ -81,7 +83,8 @@ func (u *UserHandler) Signin(e echo.Context) error {
 	if creds.Username == "" || creds.Password == "" {
 		return e.Render(http.StatusBadRequest, "error.html", "username or password must be filled")
 	}
-	user, err := u.UserUsecase.GetUserByNameUsecase(creds.Username)
+	ctx := e.Request().Context()
+	user, err := u.UserUsecase.GetUserByNameUsecase(ctx, creds.Username)
 	if err != nil {
 		e.String(http.StatusForbidden, fmt.Sprintf("username is incorrect: %v", err)) //to logs
 		return e.Render(http.StatusForbidden, "error.html", "username is incorrect")
@@ -125,8 +128,8 @@ func (u *UserHandler) Registration(e echo.Context) error {
 
 	userInfo := u.ExtractCreds(e)
 	fmt.Println("user data from client", userInfo)
-
-	if err := u.UserUsecase.CreateUserUsecase(userInfo); err != nil {
+	ctx := e.Request().Context()
+	if err := u.UserUsecase.CreateUserUsecase(ctx, userInfo); err != nil {
 		// return e.String(http.StatusBadRequest, err.Error())      // to logs
 		return e.Render(http.StatusBadRequest, "error.html", err.Error())
 	}
@@ -145,8 +148,8 @@ func (u *UserHandler) UpgradeRole(e echo.Context) error {
 	if meta.Role != "admin" {
 		return e.String(http.StatusForbidden, "Access denied")
 	}
-
-	if err := u.UserUsecase.UpgradeUserUsecase(username); err != nil {
+	ctx := e.Request().Context()
+	if err := u.UserUsecase.UpgradeUserUsecase(ctx, username); err != nil {
 		log.Printf("upgrade error: %v", err)
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again")
 	}
@@ -187,8 +190,8 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 	if meta.Role != "admin" && meta.ID != int64(newID) {
 		return e.String(http.StatusForbidden, "Access denied.")
 	}
-
-	user, err := u.UserUsecase.GetUserByIDUsecase(int64(newID))
+	ctx := e.Request().Context()
+	user, err := u.UserUsecase.GetUserByIDUsecase(ctx, int64(newID))
 	if err != nil {
 		// return e.String(http.StatusBadRequest, fmt.Sprintf("user not found: %v", err)) logg
 		return e.Render(http.StatusBadRequest, "error.html", "user not found")
@@ -214,10 +217,10 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 	}
 
 	if meta.Role != "admin" {
-
 		return e.String(http.StatusForbidden, "Access denied.")
 	}
-	users, err := u.UserUsecase.GetAllUsecase()
+	ctx := e.Request().Context()
+	users, err := u.UserUsecase.GetAllUsecase(ctx)
 	if err != nil {
 		e.String(http.StatusInternalServerError, fmt.Sprintf("%v", err)) //logg
 		return e.Render(http.StatusInternalServerError, "error.html", "Unexpected error. Please try again")

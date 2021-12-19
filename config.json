@@ -1,5 +1,6 @@
 {
     "addr": ":8080",
+    "timeout": 2,
 
     "postgres": {
         "user": "postgres",
@@ -18,4 +19,5 @@
         "secret": "super secret code",
         "ttl": 30
     }
+
 }

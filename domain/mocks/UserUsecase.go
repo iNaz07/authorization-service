@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	context "context"
 	domain "transaction-service/domain"
 
 	mock "github.com/stretchr/testify/mock"
@@ -13,13 +14,13 @@ type UserUsecase struct {
 	mock.Mock
 }
 
-// CreateUserUsecase provides a mock function with given fields: user
-func (_m *UserUsecase) CreateUserUsecase(user *domain.User) error {
-	ret := _m.Called(user)
+// CreateUserUsecase provides a mock function with given fields: ctx, user
+func (_m *UserUsecase) CreateUserUsecase(ctx context.Context, user *domain.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -27,13 +28,13 @@ func (_m *UserUsecase) CreateUserUsecase(user *domain.User) error {
 	return r0
 }
 
-// GetAllUsecase provides a mock function with given fields:
-func (_m *UserUsecase) GetAllUsecase() ([]domain.User, error) {
-	ret := _m.Called()
+// GetAllUsecase provides a mock function with given fields: ctx
+func (_m *UserUsecase) GetAllUsecase(ctx context.Context) ([]domain.User, error) {
+	ret := _m.Called(ctx)
 
 	var r0 []domain.User
-	if rf, ok := ret.Get(0).(func() []domain.User); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.User); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.User)
@@ -41,8 +42,8 @@ func (_m *UserUsecase) GetAllUsecase() ([]domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -50,13 +51,13 @@ func (_m *UserUsecase) GetAllUsecase() ([]domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByIDUsecase provides a mock function with given fields: id
-func (_m *UserUsecase) GetUserByIDUsecase(id int64) (*domain.User, error) {
-	ret := _m.Called(id)
+// GetUserByIDUsecase provides a mock function with given fields: ctx, id
+func (_m *UserUsecase) GetUserByIDUsecase(ctx context.Context, id int64) (*domain.User, error) {
+	ret := _m.Called(ctx, id)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(int64) *domain.User); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *domain.User); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -64,8 +65,8 @@ func (_m *UserUsecase) GetUserByIDUsecase(id int64) (*domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -73,13 +74,13 @@ func (_m *UserUsecase) GetUserByIDUsecase(id int64) (*domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByIINUsecase provides a mock function with given fields: iin
-func (_m *UserUsecase) GetUserByIINUsecase(iin string) (*domain.User, error) {
-	ret := _m.Called(iin)
+// GetUserByIINUsecase provides a mock function with given fields: ctx, iin
+func (_m *UserUsecase) GetUserByIINUsecase(ctx context.Context, iin string) (*domain.User, error) {
+	ret := _m.Called(ctx, iin)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(string) *domain.User); ok {
-		r0 = rf(iin)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.User); ok {
+		r0 = rf(ctx, iin)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -87,8 +88,8 @@ func (_m *UserUsecase) GetUserByIINUsecase(iin string) (*domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(iin)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, iin)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -96,13 +97,13 @@ func (_m *UserUsecase) GetUserByIINUsecase(iin string) (*domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByNameUsecase provides a mock function with given fields: name
-func (_m *UserUsecase) GetUserByNameUsecase(name string) (*domain.User, error) {
-	ret := _m.Called(name)
+// GetUserByNameUsecase provides a mock function with given fields: ctx, name
+func (_m *UserUsecase) GetUserByNameUsecase(ctx context.Context, name string) (*domain.User, error) {
+	ret := _m.Called(ctx, name)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(string) *domain.User); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.User); ok {
+		r0 = rf(ctx, name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -110,8 +111,8 @@ func (_m *UserUsecase) GetUserByNameUsecase(name string) (*domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -119,13 +120,13 @@ func (_m *UserUsecase) GetUserByNameUsecase(name string) (*domain.User, error) {
 	return r0, r1
 }
 
-// UpgradeUserUsecase provides a mock function with given fields: username
-func (_m *UserUsecase) UpgradeUserUsecase(username string) error {
-	ret := _m.Called(username)
+// UpgradeUserUsecase provides a mock function with given fields: ctx, username
+func (_m *UserUsecase) UpgradeUserUsecase(ctx context.Context, username string) error {
+	ret := _m.Called(ctx, username)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(username)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, username)
 	} else {
 		r0 = ret.Error(0)
 	}

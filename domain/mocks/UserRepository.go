@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	context "context"
 	domain "transaction-service/domain"
 
 	mock "github.com/stretchr/testify/mock"
@@ -13,13 +14,13 @@ type UserRepository struct {
 	mock.Mock
 }
 
-// CreateUser provides a mock function with given fields: user
-func (_m *UserRepository) CreateUser(user *domain.User) error {
-	ret := _m.Called(user)
+// CreateUser provides a mock function with given fields: ctx, user
+func (_m *UserRepository) CreateUser(ctx context.Context, user *domain.User) error {
+	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*domain.User) error); ok {
-		r0 = rf(user)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.User) error); ok {
+		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -27,13 +28,13 @@ func (_m *UserRepository) CreateUser(user *domain.User) error {
 	return r0
 }
 
-// GetAllUsers provides a mock function with given fields:
-func (_m *UserRepository) GetAllUsers() ([]domain.User, error) {
-	ret := _m.Called()
+// GetAllUsers provides a mock function with given fields: ctx
+func (_m *UserRepository) GetAllUsers(ctx context.Context) ([]domain.User, error) {
+	ret := _m.Called(ctx)
 
 	var r0 []domain.User
-	if rf, ok := ret.Get(0).(func() []domain.User); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.User); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.User)
@@ -41,8 +42,8 @@ func (_m *UserRepository) GetAllUsers() ([]domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -50,13 +51,13 @@ func (_m *UserRepository) GetAllUsers() ([]domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByID provides a mock function with given fields: id
-func (_m *UserRepository) GetUserByID(id int64) (*domain.User, error) {
-	ret := _m.Called(id)
+// GetUserByID provides a mock function with given fields: ctx, id
+func (_m *UserRepository) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
+	ret := _m.Called(ctx, id)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(int64) *domain.User); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *domain.User); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -64,8 +65,8 @@ func (_m *UserRepository) GetUserByID(id int64) (*domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(int64) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -73,13 +74,13 @@ func (_m *UserRepository) GetUserByID(id int64) (*domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByIIN provides a mock function with given fields: iin
-func (_m *UserRepository) GetUserByIIN(iin string) (*domain.User, error) {
-	ret := _m.Called(iin)
+// GetUserByIIN provides a mock function with given fields: ctx, iin
+func (_m *UserRepository) GetUserByIIN(ctx context.Context, iin string) (*domain.User, error) {
+	ret := _m.Called(ctx, iin)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(string) *domain.User); ok {
-		r0 = rf(iin)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.User); ok {
+		r0 = rf(ctx, iin)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -87,8 +88,8 @@ func (_m *UserRepository) GetUserByIIN(iin string) (*domain.User, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(iin)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, iin)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -96,13 +97,13 @@ func (_m *UserRepository) GetUserByIIN(iin string) (*domain.User, error) {
 	return r0, r1
 }
 
-// GetUserByUsername provides a mock function with given fields: username
-func (_m *UserRepository) GetUserByUsername(username string) (*domain.User, error) {
-	ret := _m.Called(username)
+// GetUserByUsername provides a mock function with given fields: ctx, username
+func (_m *UserRepository) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
+	ret := _m.Called(ctx, username)
 
 	var r0 *domain.User
-	if rf, ok := ret.Get(0).(func(string) *domain.User); ok {
-		r0 = rf(username)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.User); ok {
+		r0 = rf(ctx, username)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.User)
@@ -110,8 +111,8 @@ func (_m *UserRepository) GetUserByUsername(username string) (*domain.User, erro
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(username)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, username)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -119,13 +120,13 @@ func (_m *UserRepository) GetUserByUsername(username string) (*domain.User, erro
 	return r0, r1
 }
 
-// UpgradeUserRepo provides a mock function with given fields: username
-func (_m *UserRepository) UpgradeUserRepo(username string) error {
-	ret := _m.Called(username)
+// UpgradeUserRepo provides a mock function with given fields: ctx, username
+func (_m *UserRepository) UpgradeUserRepo(ctx context.Context, username string) error {
+	ret := _m.Called(ctx, username)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(username)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, username)
 	} else {
 		r0 = ret.Error(0)
 	}

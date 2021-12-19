@@ -5,7 +5,9 @@ go 1.17
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/driftprogramming/pgxpoolmock v1.1.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/golang/mock v1.6.0
 	github.com/jackc/pgx/v4 v4.14.1
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/pashagolub/pgxmock v1.4.3

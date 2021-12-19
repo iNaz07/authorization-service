@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"context"
+)
+
 type User struct {
 	ID           int64  `json:"id"`
 	IIN          string `json:"iin"`
@@ -22,19 +26,19 @@ type UserInfo struct {
 }
 
 type UserRepository interface {
-	CreateUser(user *User) error
-	GetUserByID(id int64) (*User, error)
-	GetUserByUsername(username string) (*User, error)
-	GetUserByIIN(iin string) (*User, error)
-	GetAllUsers() ([]User, error)
-	UpgradeUserRepo(username string) error
+	CreateUser(ctx context.Context, user *User) error
+	GetUserByID(ctx context.Context, id int64) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (*User, error)
+	GetUserByIIN(ctx context.Context, iin string) (*User, error)
+	GetAllUsers(ctx context.Context) ([]User, error)
+	UpgradeUserRepo(ctx context.Context, username string) error
 }
 
 type UserUsecase interface {
-	CreateUserUsecase(user *User) error
-	GetUserByNameUsecase(name string) (*User, error) //пересмотреть
-	GetUserByIINUsecase(iin string) (*User, error)
-	GetUserByIDUsecase(id int64) (*User, error)
-	GetAllUsecase() ([]User, error)
-	UpgradeUserUsecase(username string) error
+	CreateUserUsecase(ctx context.Context, user *User) error
+	GetUserByNameUsecase(ctx context.Context, name string) (*User, error) //пересмотреть
+	GetUserByIINUsecase(ctx context.Context, iin string) (*User, error)
+	GetUserByIDUsecase(ctx context.Context, id int64) (*User, error)
+	GetAllUsecase(ctx context.Context) ([]User, error)
+	UpgradeUserUsecase(ctx context.Context, username string) error
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/bxcodec/faker"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	// "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +23,7 @@ func TestHome(t *testing.T) {
 	assert.NoError(t, err)
 
 	mockUCase := new(mocks.UserUsecase)
-	mockUCase.On("GetUserByIDUsecase", mockNewUser.ID).Return(&mockNewUser, nil)
+	mockUCase.On("GetUserByIDUsecase", mock.Anything, mockNewUser.ID).Return(&mockNewUser, nil)
 
 	e := echo.New()
 
@@ -45,7 +44,6 @@ func TestHome(t *testing.T) {
 	mockUCase.AssertExpectations(t)
 }
 
-
 func TestRegistration(t *testing.T) {
 	mockUser := &domain.User{
 		Username: "nazerke",
@@ -57,7 +55,7 @@ func TestRegistration(t *testing.T) {
 	tempMockUser.ID = 0
 	mockUCase := new(mocks.UserUsecase)
 
-	mockUCase.On("CreateUserUsecase", mockUser).Return(nil)
+	mockUCase.On("CreateUserUsecase", mock.Anything, mockUser).Return(nil)
 
 	e := echo.New()
 	req, err := http.NewRequest(echo.POST, "/signup?username=nazerke&iin=940217450216&password=Qwe12@", strings.NewReader(""))
@@ -85,7 +83,7 @@ func TestSignIn(t *testing.T) {
 	var token string
 
 	mockUCase := new(mocks.UserUsecase)
-	mockUCase.On("GetUserByNameUsecase", mockNewUser.Username).Return(mockNewUser, nil)
+	mockUCase.On("GetUserByNameUsecase", mock.Anything, mockNewUser.Username).Return(mockNewUser, nil)
 	ok := utils.ComparePasswordHash(mockNewUser.Password, psw)
 	assert.False(t, ok)
 	mockJWTUCase := new(mocks.JwtTokenUsecase)
@@ -121,7 +119,7 @@ func TestGetAllUserInfo(t *testing.T) {
 	mockListUser = append(mockListUser, mockNewUser)
 
 	mockUCase := new(mocks.UserUsecase)
-	mockUCase.On("GetAllUsecase").Return(mockListUser, nil)
+	mockUCase.On("GetAllUsecase", mock.Anything).Return(mockListUser, nil)
 
 	e := echo.New()
 	req, err := http.NewRequest(echo.GET, "/user/info/all", strings.NewReader(""))
@@ -150,7 +148,7 @@ func TestGetUserInfo(t *testing.T) {
 	assert.NoError(t, err)
 	id := strconv.Itoa(int(mockNewUser.ID))
 	mockUCase := new(mocks.UserUsecase)
-	mockUCase.On("GetUserByIDUsecase", mockNewUser.ID).Return(&mockNewUser, nil)
+	mockUCase.On("GetUserByIDUsecase", mock.Anything, mockNewUser.ID).Return(&mockNewUser, nil)
 
 	e := echo.New()
 	req, err := http.NewRequest(echo.GET, "/user/info/"+id, strings.NewReader(""))
@@ -182,7 +180,7 @@ func TestUpgradeRole(t *testing.T) {
 	mockNewUser.Role = "admin"
 
 	mockUCase := new(mocks.UserUsecase)
-	mockUCase.On("UpgradeUserUsecase", "someuser").Return(nil)
+	mockUCase.On("UpgradeUserUsecase", mock.Anything, "someuser").Return(nil)
 
 	e := echo.New()
 

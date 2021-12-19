@@ -35,11 +35,13 @@ func main() {
 		AccessTtl:    viper.GetDuration(`token.ttl`) * time.Minute,
 	}
 
+	timeout := viper.GetDuration(`timeout`) * time.Second
+
 	db := connectDB()
 	defer db.Close()
 
 	userRepo := _repo.NewUserRepository(db)
-	userUsecase := _usecase.NewUserUseCase(userRepo)
+	userUsecase := _usecase.NewUserUseCase(userRepo, timeout)
 	jwtUsecase := _usecase.NewJWTUseCase(token)
 
 	e := echo.New()
