@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+
 	"net/http"
 	"time"
 	"transaction-service/domain"
 	_handler "transaction-service/users/delivery/http"
 	_repo "transaction-service/users/repository/postgres"
+	_redis "transaction-service/users/repository/redis"
 	_usecase "transaction-service/users/usecase"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/go-redis/redis"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -18,9 +21,9 @@ import (
 )
 
 func init() {
-	viper.SetConfigFile(`config.json`)
+	viper.SetConfigFile(`../config.json`)
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("get configuration error: ", err)
+		log.Fatal().Err(err).Msg("get configuration error")
 	}
 }
 
@@ -31,10 +34,9 @@ func main() {
 
 	token := domain.JwtToken{
 		AccessSecret: viper.GetString(`token.secret`),
-		RedisConn:    client,
 		AccessTtl:    viper.GetDuration(`token.ttl`) * time.Minute,
 	}
-
+	redis := _redis.NewRedisRepo(client)
 	timeout := viper.GetDuration(`timeout`) * time.Second
 
 	db := connectDB()
@@ -42,14 +44,14 @@ func main() {
 
 	userRepo := _repo.NewUserRepository(db)
 	userUsecase := _usecase.NewUserUseCase(userRepo, timeout)
-	jwtUsecase := _usecase.NewJWTUseCase(token)
+	jwtUsecase := _usecase.NewJWTUseCase(token, redis)
 
 	e := echo.New()
 	_handler.NewUserHandler(e, userUsecase, jwtUsecase)
 
 	err := e.Start(viper.GetString(`addr`))
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(`shutting down the server`, err)
+		log.Fatal().Err(err).Msg(`shutting down the server`)
 	}
 }
 
@@ -66,7 +68,7 @@ func connectRedis() *redis.Client {
 
 	_, err := client.Ping().Result()
 	if err != nil {
-		log.Fatalf("Ping error: %v", err)
+		log.Fatal().Err(err).Msg("redis ping error")
 	}
 	return client
 }
@@ -83,18 +85,18 @@ func connectDB() *pgxpool.Pool {
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Fatalf("Open db error: %v", err)
+		log.Fatal().Err(err).Msg("parse dsn config error")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
 	db, err := pgxpool.ConnectConfig(ctx, config)
 	if err != nil {
-		log.Fatalf("Connect db error: %v", err)
+		log.Fatal().Err(err).Msg("connect postgres error")
 	}
 
 	if err := db.Ping(ctx); err != nil {
-		log.Fatalf("Ping db error: %v", err)
+		log.Fatal().Err(err).Msg("db ping error")
 	}
 	//TODO: move all to init.sql
 	//temporary
@@ -116,7 +118,7 @@ func connectDB() *pgxpool.Pool {
 	);
 	`)
 	if err != nil {
-		log.Fatalf("Create table error: %v", err)
+		log.Fatal().Err(err).Msg("Create table error")
 	}
 	_, err = db.Exec(ctx,
 		`INSERT INTO users(username, password, iin, role, registerDate) VALUES ($1, $2, $3, $4, $5)`,

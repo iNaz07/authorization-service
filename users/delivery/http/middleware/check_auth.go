@@ -3,6 +3,8 @@ package middleware
 import (
 	"transaction-service/domain"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -27,13 +29,19 @@ func (a *Authorization) CheckToken(auth string, c echo.Context) (interface{}, er
 
 	id, err := a.JwtUsecase.ParseTokenAndGetID(auth)
 	if err != nil {
+		logErr := err.(*domain.LogError)
+		log.Err(logErr).Msg(logErr.Message)
 		return nil, err
 	}
-	if !a.JwtUsecase.FindToken(id, auth) {
+	if ok, err := a.JwtUsecase.FindToken(id, auth); err != nil || !ok {
+		logErr := err.(*domain.LogError)
+		log.Err(logErr).Msg(logErr.Message)
 		return nil, err
 	}
 	role, err := a.JwtUsecase.ParseTokenAndGetRole(auth)
 	if err != nil {
+		logErr := err.(*domain.LogError)
+		log.Err(logErr).Msg(logErr.Message)
 		return nil, err
 	}
 	info := domain.User{

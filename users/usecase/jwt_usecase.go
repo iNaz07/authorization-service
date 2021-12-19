@@ -13,10 +13,11 @@ import (
 
 type jwtUsecase struct {
 	token domain.JwtToken
+	redis domain.JwtTokenRepo
 }
 
-func NewJWTUseCase(token domain.JwtToken) domain.JwtTokenUsecase {
-	return &jwtUsecase{token: token}
+func NewJWTUseCase(token domain.JwtToken, redis domain.JwtTokenRepo) domain.JwtTokenUsecase {
+	return &jwtUsecase{token: token, redis: redis}
 }
 
 func (j *jwtUsecase) GenerateToken(id int64, role, iin string) (string, error) {
@@ -29,17 +30,20 @@ func (j *jwtUsecase) GenerateToken(id int64, role, iin string) (string, error) {
 	accessTokenClaims["exp"] = time.Now().Add(j.token.AccessTtl).Unix()
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessTokenClaims)
 	signedToken, err := accessToken.SignedString([]byte(j.token.AccessSecret))
-	return signedToken, err
+	if err != nil {
+		return "", &domain.LogError{"cannot create signed token", err, http.StatusInternalServerError}
+	}
+	return signedToken, nil
 }
 
 func (j *jwtUsecase) ParseTokenAndGetID(token string) (int64, error) {
 	claims, err := j.ParseToken(token)
 	if err != nil {
-		return -1, fmt.Errorf("invalid token: %w", err)
+		return -1, &domain.LogError{"invalid token", err, http.StatusBadRequest}
 	}
 	id, ok := claims["id"].(float64)
 	if !ok {
-		return -1, fmt.Errorf("id not found from token")
+		return -1, &domain.LogError{"invalid token", fmt.Errorf("id not found from token"), http.StatusBadRequest}
 	}
 	return int64(id), nil
 }
@@ -47,28 +51,32 @@ func (j *jwtUsecase) ParseTokenAndGetID(token string) (int64, error) {
 func (j *jwtUsecase) ParseTokenAndGetRole(token string) (string, error) {
 	claims, err := j.ParseToken(token)
 	if err != nil {
-		return "", fmt.Errorf("invalid token: %w", err)
+		return "", &domain.LogError{"invalid token", err, http.StatusBadRequest}
 	}
 	role, ok := claims["role"].(string)
 	if !ok {
-		return "", fmt.Errorf("role not found from token")
+		return "", &domain.LogError{"invalid token", fmt.Errorf("role not found from token"), http.StatusBadRequest}
 	}
 	return role, nil
 }
 
 func (j *jwtUsecase) InsertToken(id int64, token string) error {
+
 	key := fmt.Sprintf("user:%d", id)
-	return j.token.RedisConn.Set(key, token, 30*time.Minute).Err()
+	if err := j.redis.InsertTokenRepo(key, token, j.GetAccessTTL()); err != nil {
+		return &domain.LogError{"cannot insert token", err, http.StatusInternalServerError}
+	}
+	return nil
 }
 
-func (j *jwtUsecase) FindToken(id int64, token string) bool {
+func (j *jwtUsecase) FindToken(id int64, token string) (bool, error) {
 	key := fmt.Sprintf("user:%d", id)
 
-	value, err := j.token.RedisConn.Get(key).Result()
+	ok, err := j.redis.FindTokenRepo(key, token)
 	if err != nil {
-		return false
+		return false, &domain.LogError{"cannot find token", err, http.StatusBadRequest}
 	}
-	return token == value
+	return ok, nil
 }
 
 func (j *jwtUsecase) GetAccessTTL() time.Duration {

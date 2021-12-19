@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"fmt"
+	"net/http"
 	"time"
 	"transaction-service/domain"
 	utils "transaction-service/utils"
@@ -21,11 +21,12 @@ func (u *userUsecase) CreateUserUsecase(ctx context.Context, user *domain.User) 
 	context, cancel := context.WithTimeout(ctx, u.timeoutContext)
 	defer cancel()
 	if _, err := u.userRepo.GetUserByIIN(context, user.IIN); err == nil {
-		return fmt.Errorf("user already registered by iin: %w", err)
+		return &domain.LogError{"user already registered by iin", err, http.StatusBadRequest}
 	}
 	if err := utils.ValidateCreds(user.Username, user.Password, user.IIN); err != nil {
-		return fmt.Errorf("invalid creds: %w", err)
+		return &domain.LogError{"invalid credentials", err, http.StatusBadRequest}
 	}
+	// TODO: fix ths func
 	hashedPassword := utils.GenerateHash(user.Password)
 	user.Password = hashedPassword
 
@@ -35,7 +36,7 @@ func (u *userUsecase) CreateUserUsecase(ctx context.Context, user *domain.User) 
 	user.RegisterDate = time.Now().Format("2006-01-02 15:04:05")
 
 	if err := u.userRepo.CreateUser(context, user); err != nil {
-		return fmt.Errorf("registration error: %w", err)
+		return &domain.LogError{"registration error", err, http.StatusInternalServerError}
 	}
 	return nil
 }
@@ -46,7 +47,7 @@ func (u *userUsecase) GetUserByIDUsecase(ctx context.Context, id int64) (*domain
 
 	user, err := u.userRepo.GetUserByID(context, id)
 	if err != nil {
-		return nil, fmt.Errorf("user doesn't exist: %w", err)
+		return nil, &domain.LogError{"user not found", err, http.StatusNotFound}
 	}
 	return user, nil
 }
@@ -57,7 +58,7 @@ func (u *userUsecase) GetUserByNameUsecase(ctx context.Context, name string) (*d
 
 	user, err := u.userRepo.GetUserByUsername(context, name)
 	if err != nil {
-		return nil, fmt.Errorf("user doesn't exist: %w", err)
+		return nil, &domain.LogError{"user not found", err, http.StatusNotFound}
 	}
 	return user, nil
 }
@@ -68,7 +69,7 @@ func (u *userUsecase) GetUserByIINUsecase(ctx context.Context, iin string) (*dom
 
 	user, err := u.userRepo.GetUserByIIN(context, iin)
 	if err != nil {
-		return nil, fmt.Errorf("user doesn't exist: %w", err)
+		return nil, &domain.LogError{"user not found", err, http.StatusNotFound}
 	}
 	return user, nil
 }
@@ -79,7 +80,7 @@ func (u *userUsecase) GetAllUsecase(ctx context.Context) ([]domain.User, error) 
 
 	users, err := u.userRepo.GetAllUsers(context)
 	if err != nil {
-		return nil, fmt.Errorf("get all user error: %w", err)
+		return nil, &domain.LogError{"GetAllUser error", err, http.StatusInternalServerError}
 	}
 	return users, nil
 }
@@ -88,8 +89,12 @@ func (u *userUsecase) UpgradeUserUsecase(ctx context.Context, username string) e
 	context, cancel := context.WithTimeout(ctx, u.timeoutContext)
 	defer cancel()
 
+	if _, err := u.userRepo.GetUserByUsername(context, username); err != nil {
+		return &domain.LogError{"user not found to upgrade role", err, http.StatusBadRequest}
+	}
+
 	if err := u.userRepo.UpgradeUserRepo(context, username); err != nil {
-		return fmt.Errorf("upgrade error: %w", err)
+		return &domain.LogError{"cannot upgrade user role", err, http.StatusInternalServerError}
 	}
 	return nil
 }
