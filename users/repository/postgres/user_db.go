@@ -29,8 +29,8 @@ func (u *userRepository) GetUserByID(ctx context.Context, id int64) (*domain.Use
 
 	user := &domain.User{}
 
-	if err := u.Conn.QueryRow(ctx, "SELECT iin, username, role, registerdate FROM users WHERE id=$1", id).
-		Scan(&user.IIN, &user.Username, &user.Role, &user.RegisterDate); err != nil {
+	if err := u.Conn.QueryRow(ctx, "SELECT id, iin, username, role, registerdate FROM users WHERE id=$1", id).
+		Scan(&user.ID, &user.IIN, &user.Username, &user.Role, &user.RegisterDate); err != nil {
 		return nil, err
 	}
 

@@ -256,7 +256,8 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 				User: user,
 			}
 			all = append(all, info)
-			return e.Render(http.StatusOK, "alluser.html", all)
+			continue
+			// return e.Render(http.StatusOK, "alluser.html", all)
 		}
 
 		info := domain.UserInfo{
@@ -299,6 +300,7 @@ func GetAccountInfo(e echo.Context, iin string) ([]domain.Accounts, error) {
 		return nil, &domain.LogError{"accounts not found", err, res.StatusCode}
 	}
 	if err := json.Unmarshal(resp, &all); err != nil {
+		log.Log().Msg(string(resp))
 		return nil, &domain.LogError{"unmarshal response body error", err, http.StatusInternalServerError}
 	}
 	return all, nil

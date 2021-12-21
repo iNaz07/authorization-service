@@ -24,7 +24,7 @@ func (u *userUsecase) CreateUserUsecase(ctx context.Context, user *domain.User) 
 		return &domain.LogError{"user already registered by iin", err, http.StatusBadRequest}
 	}
 	if err := utils.ValidateCreds(user.Username, user.Password, user.IIN); err != nil {
-		return &domain.LogError{"invalid credentials", err, http.StatusBadRequest}
+		return &domain.LogError{err.Error(), err, http.StatusBadRequest}
 	}
 	// TODO: fix ths func
 	hashedPassword := utils.GenerateHash(user.Password)
