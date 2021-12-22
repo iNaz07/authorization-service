@@ -278,7 +278,7 @@ func GetAccountInfo(e echo.Context, iin string) ([]domain.Accounts, error) {
 		return nil, &domain.LogError{"cookie not found", err, http.StatusUnauthorized}
 	}
 
-	req, err := http.NewRequest("GET", "http://localhost:8181/account/info/"+iin, nil)
+	req, err := http.NewRequest("GET", "http://localhost:8181/account/info/"+iin+"/auth", nil)
 	if err != nil {
 		return nil, &domain.LogError{"create new request error", err, http.StatusInternalServerError}
 	}
