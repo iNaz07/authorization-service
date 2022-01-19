@@ -15,6 +15,7 @@ WORKDIR /cmd
 
 COPY --from=build /app/main ./
 COPY --from=build /app/config.json ./
+COPY --from=build /app/templates ./templates
 
 EXPOSE 8080
 

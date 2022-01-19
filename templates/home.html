@@ -9,10 +9,12 @@
 </head>
 
 <body>
-    <p>Welcome {{.Username}} ! </p>
+<div style="border: 5px solid darkgreen; margin: auto">
+    <p>Welcome {{.Username}}! </p>
     {{$role := len .Role}}
-    <a href="/user/info/{{.ID}}">My Profile</a><br> {{if gt $role 4}}
-    <a href="/user/info/all">Information about all users</a> {{end}}
+    <a href="localhost:8080/user/info/{{.ID}}">My Profile</a><br> {{if gt $role 4}}
+    <a href="localhost:8080/user/info/all">Information about all users</a> {{end}}
+</div>
 </body>
 
 </html>

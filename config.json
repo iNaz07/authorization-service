@@ -5,13 +5,13 @@
     "postgres": {
         "user": "postgres",
         "password": "password",
-        "host": "localhost",
+        "host": "db",
         "port": 5432,
         "dbname": "auth"
     },
 
     "redis": {
-        "address": "localhost:6379",
+        "address": "redis:6379",
         "password": "qwerty"
     },
 

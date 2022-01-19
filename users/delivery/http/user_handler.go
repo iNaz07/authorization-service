@@ -35,7 +35,7 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func NewUserHandler(e *echo.Echo, us domain.UserUsecase, jwt domain.JwtTokenUsecase) {
 	t := &Template{
-		templates: template.Must(template.ParseGlob("../templates/*.html")),
+		templates: template.Must(template.ParseGlob("templates/*.html")),
 	}
 	e.Renderer = t
 

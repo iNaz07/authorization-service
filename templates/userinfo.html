@@ -9,7 +9,7 @@
 </head>
 
 <body>
-
+    <div style="border: 3px solid darkgreen; margin: auto">
     {{$role := len .User.Role}} {{if gt $role 4}}
     <a href="/user/info/all">back</a> {{end}}
     <h3>Profile</h3>
@@ -37,6 +37,7 @@
             acc.appendChild(p)
         }
     </script>
+    </div>
 </body>
 
 </html>

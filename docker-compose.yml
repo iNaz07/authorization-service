@@ -1,11 +1,42 @@
 version: '3.1'
 
 services:
-
+  db:
+    image: postgres:latest
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=auth
+    # volumes:
+    #   - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - '5432:5432'
+    networks:
+      - app
   redis:
     image: redis
     command: redis-server --requirepass qwerty
     ports:
       - '6379:6379'
-   
- 
+    networks:
+      - app
+  auth: #this for 1-service
+    build: ./
+    image: authorization-service_auth
+    depends_on:
+      - redis
+      - db
+      # condition: service_healthy
+    ports:
+      - '8080:8080'
+    environment:
+      REDIS_URL: redis:6379
+    networks:
+      - app
+
+networks:
+  app:

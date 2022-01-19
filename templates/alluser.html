@@ -9,18 +9,20 @@
 </head>
 
 <body>
+<div style="border: 3px solid darkgreen; margin: auto">
+
     <a href="/user/home">back</a>
-    <h1>All USER</h1>
+    <h1>All user information</h1>
     {{ range . }}
-    <div style="border-color: black;">
-        <div style="border-color: gray;">
+    <div style="border: 3px solid black; margin: auto">
+        <div style="border: 2px solid brown; margin: auto">
             <p>Username: {{ .User.Username }}</p>
             <p>IIN: {{ .User.IIN }} </p>
             <p>Role: {{ .User.Role }}</p>
             <p>Date of registration: {{ .User.RegisterDate}} </p>
             <a href="/user/upgrade/{{ .User.Username }}">Upgrade</a>
         </div>
-        <div style="border-color: gray;">
+        <div style="border: 2px solid brown;">
             {{range .Accounts }} {{$sliceLen := len .Number}} {{if gt $sliceLen 0}}
             <p>Account number: {{ .Number}} </p>
             <p>Available money: {{ .Balance}} </p>
@@ -31,6 +33,7 @@
     </div>
 
     {{end}}
+</div>
 </body>
 
 </html>
