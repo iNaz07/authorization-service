@@ -221,7 +221,7 @@ func (u *UserHandler) GetUserInfo(e echo.Context) error {
 		User:     *user,
 		Accounts: acc,
 	}
-	// return e.JSON(http.StatusOK, info)
+	fmt.Println("this is user account info from transaction service  => ", acc)
 	return e.Render(http.StatusOK, "userinfo.html", info)
 }
 
@@ -266,6 +266,7 @@ func (u *UserHandler) GetAllUserInfo(e echo.Context) error {
 		}
 		all = append(all, info)
 	}
+	fmt.Println("this is all user from transaction service  => ", all)
 	return e.Render(http.StatusOK, "alluser.html", all)
 	// return e.JSON(http.StatusOK, all)
 }
